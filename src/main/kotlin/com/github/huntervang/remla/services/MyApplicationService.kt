@@ -1,6 +1,6 @@
-package org.jetbrains.plugins.template.services
+package com.github.huntervang.remla.services
 
-import org.jetbrains.plugins.template.MyBundle
+import com.github.huntervang.remla.MyBundle
 
 class MyApplicationService {
 
