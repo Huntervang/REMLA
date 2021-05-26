@@ -16,4 +16,11 @@
         <listener class="com.github.huntervang.remla.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+
+    <actions>
+        <group id="REMLA.HelloWorldAction" text="REMLA" description="Plugin for REMLA">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+            <action class="com.github.huntervang.remla.HelloWorldAction" id="REMLA.Actions.HelloWorldAction" text="Say Hello"/>
+        </group>
+    </actions>
 </idea-plugin>
