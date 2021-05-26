@@ -7,16 +7,6 @@
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.huntervang.remla.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.huntervang.remla.services.MyProjectService"/>
-    </extensions>
-
-    <applicationListeners>
-        <listener class="com.github.huntervang.remla.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
-
     <actions>
         <group id="REMLA.HelloWorldAction" text="REMLA" description="Plugin for REMLA">
             <add-to-group group-id="MainMenu" anchor="last"/>
