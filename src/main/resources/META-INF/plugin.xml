@@ -13,4 +13,9 @@
             <action class="com.github.huntervang.remla.HelloWorldAction" id="REMLA.Actions.HelloWorldAction" text="Say Hello"/>
         </group>
     </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="DVC" secondary="false" icon="/icons/DVC_toolwindow.png" anchor="bottom"
+                    factoryClass="com.github.huntervang.remla.DVCToolWindowFactory"/>
+    </extensions>
 </idea-plugin>
