@@ -41,13 +41,20 @@ public class HelloWorldAction extends AnAction {
 
             // Add event listener on text available of command output
             processHandler.addProcessListener(new ProcessAdapter() {
+                final StringBuilder fullOutput = new StringBuilder();
+
                 @Override
                 public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                     super.onTextAvailable(event, outputType);
-                    String commandOutput = event.getText();
+                    fullOutput.append(event.getText());
+                }
+
+                @Override
+                public void processTerminated(@NotNull ProcessEvent event) {
+                    super.processTerminated(event);
 
                     Runnable displayHelloWorld = () -> {
-                        Messages.showMessageDialog(project, commandOutput, "Command Output", Messages.getInformationIcon());
+                        Messages.showMessageDialog(project, fullOutput.toString(), "Command Output", Messages.getInformationIcon());
                     };
 
                     // Queue the showMessageDialog so it gets executed during the dispatch event
