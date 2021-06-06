@@ -30,7 +30,7 @@ repositories {
 dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
     // https://mvnrepository.com/artifact/org.json/json
-    implementation( "org.json:json:20210307")
+    implementation("org.json:json:20210307")
 }
 
 // Configure gradle-intellij-plugin plugin.

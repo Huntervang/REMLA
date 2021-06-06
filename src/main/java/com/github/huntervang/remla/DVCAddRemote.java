@@ -30,7 +30,9 @@ public class DVCAddRemote {
     private JButton addStorageButton;
     private JPanel filePanel;
     private JLabel fileLabel;
+    private JScrollPane fileListScroller;
     private JList fileList;
+    private JScrollPane changeListScroller;
     private JList changeList;
     private JFileChooser fileChooser;
     private final Project project;
@@ -84,7 +86,7 @@ public class DVCAddRemote {
                         JSONObject file = (JSONObject)itr.next();
                         String filename = file.getString("path");
                         if( !Arrays.stream(notListed).anyMatch(filename::equals) &&
-                            !(filename.substring(filename.length()-4,filename.length()-1) == "*.dvc"))
+                            !(filename.substring(filename.length()-4,filename.length()).equals(".dvc")))
                             {
                                 files.add((String) filename);
                             }
