@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.HashMap;
 import java.awt.Color;
 
 import org.json.JSONObject;
@@ -42,33 +43,46 @@ public class DVCAddRemote {
 
     private final String messageIfRanCorrectly = "";
     private final String[] notListed = {".gitignore", ".dvcignore"};
+    private HashMap<String, Color> colorMap = new HashMap<String, Color>() {{   put("new" , Color.green);
+                                                                                put("modified" , Color.blue);
+                                                                                put("deleted" , Color.gray);
+                                                                                put("not in cache" , Color.red); }};
+
+    private boolean waitingForStatus = true;
+    private HashMap<String, String> dvcStatus = new HashMap<>();
 
     public DVCAddRemote(ToolWindow toolWindow) {
         project = ProjectManager.getInstance().getOpenProjects()[0];
         addStorageButton.addActionListener(e -> dvcAddRemote());
-        setDVCFiles();
-        setDVCFileList();
-        //fileLabel.setIcon(Icon("DVC.png"));
+        setDVCFileList(); //TODO set filelist is called in first render, should be applied on some trigger, but don't know which trigger
     }
 
     private boolean commandRanCorrectly(String message){
+        return message.equals(messageIfRanCorrectly);
+    }
 
-        if(message.equals(messageIfRanCorrectly))
-            return true;
-        else
-            return false;
+    //wait for the setDVCStatus function to perform "DVC status" which is executed async,
+    // but DVCFileList needs the information causing a race condition
+    private void waitForStatus(){
+        while(waitingForStatus){
+            try {
+                Thread.sleep(0);
+            }
+            catch(InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private void setDVCFileList() {
-        String dvcList = "dvc list . -R --show-json"; //TODO handle folder path
-        String response = runConsoleCommand(dvcList, new ProcessAdapter() {
+        String dvcListCommand = "dvc list . -R --dvc-only --show-json"; //TODO handle folder path
+        String response = runConsoleCommand(dvcListCommand, new ProcessAdapter() {
             JSONArray status;
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 super.onTextAvailable(event, outputType);
                 try {
                     String commandOutput = event.getText();
-                    System.out.println(commandOutput);
                     status = new JSONArray(commandOutput);
                 }
                 catch(org.json.JSONException e){
@@ -79,7 +93,6 @@ public class DVCAddRemote {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-
                 Object files[][] = new Object[status.length()][2];
 
                 if(status.length() == 0){ //emtpy file list
@@ -88,18 +101,33 @@ public class DVCAddRemote {
                 else {
                     for(int i=0; i<status.length(); i++){ //
                         JSONObject file = (JSONObject) status.get(i);
-                        String filename = file.getString("path");
+                        String fileName = file.getString("path");
 
-                        //TODO Parse DVC Status: get status per file
+                        waitingForStatus = true;
+                        setDVCStatus();
+                        waitForStatus();
 
-                        if( !Arrays.stream(notListed).anyMatch(filename::equals) &&
-                            !(filename.substring(filename.length()-4,filename.length()).equals(".dvc")))
-                        {
-                            //TODO : adapt color on status info
-                            Object fileColor = Color.green;
-                            files[i][0] = fileColor;
-                            files[i][1] = (String) filename;
+                        //if( !Arrays.stream(notListed).anyMatch(filename::equals) &&
+                        //    !(filename.substring(filename.length()-4,filename.length()).equals(".dvc")))
+                        Object fileColor;
+                        System.out.println(dvcStatus.keySet());
+                        System.out.println("filename check:" + fileName);
+
+                        if( dvcStatus.keySet().contains(fileName)){
+                            String fileStatus = dvcStatus.get(fileName);
+
+                            fileColor = colorMap.get(fileStatus);
+
+                            System.out.println("filecolor:" + fileColor);
+                            System.out.println("filename:" + fileName);
+
                         }
+                        else{
+                            fileColor = Color.green;
+                            System.out.println("regular");
+                        }
+                        files[i][0] = fileColor;
+                        files[i][1] = (String) fileName;
                     }
                     fileLabel.setText("Your tracked files:");
                     fileList.setListData(files);
@@ -112,12 +140,13 @@ public class DVCAddRemote {
         if(!commandRanCorrectly(response)){
             fileLabel.setText((String) response);
         }
+        waitForStatus();
     }
 
     //TODO parse DVC status and handle differences
-    private void setDVCFiles() {
-        String dvcStatus = "dvc status --show-json";
-        String response = runConsoleCommand(dvcStatus, new ProcessAdapter() {
+    private void setDVCStatus() {
+        String dvcStatusCommand = "dvc status --show-json";
+        String response = runConsoleCommand(dvcStatusCommand, new ProcessAdapter() {
             JSONObject status;
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
@@ -126,24 +155,26 @@ public class DVCAddRemote {
                     String commandOutput = event.getText();
                     System.out.println(commandOutput);
                     status = new JSONObject(commandOutput);
+                    for(String dvcFile : status.keySet()) { //traverse json format output of dvc status (entry per *.dvc file)
+                        JSONArray DVCFileStatus = (JSONArray) status.get(dvcFile);
+                        for(Object statusEntries : DVCFileStatus) {
+                            JSONObject statusjson = (JSONObject) statusEntries;
+                            JSONObject outgoingEntry = (JSONObject) statusjson.get("changed outs");
+                            for(String filename : outgoingEntry.keySet()){
+                                dvcStatus.put(filename, (String) outgoingEntry.get(filename));
+                            }
+                        }//TODO incoming EntrySet?
+                    }
+                    System.out.println(dvcStatus.keySet());
                 }
                 catch(org.json.JSONException e){
                     status = new JSONObject();
                 }
             }
-
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-                if(status.keySet().size() == 0){ //emtpy file list
-                    fileLabel.setText("There are no files tracked yet");
-                }
-                else {
-                    for (Object filename : status.keySet()) {
-                        fileLabel.setText((String) filename);
-                        System.out.println((String) filename);
-                    }
-                }
+                waitingForStatus = false;
             }
         });
         if(!commandRanCorrectly(response)){
@@ -182,7 +213,6 @@ public class DVCAddRemote {
         } catch (ExecutionException executionException) {
             String errorMessage = executionException.getMessage();
             System.out.println(errorMessage);
-            System.out.println("here");
             return errorMessage;
         }
     }
