@@ -15,11 +15,14 @@ import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
+import java.awt.Color;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -76,26 +79,41 @@ public class DVCAddRemote {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-                Vector<String> files = new Vector<>();
+                //Vector<{Color,String}> files = new Vector<>();
+
+                Object files[][] = new Object[status.length()][2];
+
+                /*Object files[][] = {
+                        { Color.red, "Help" },
+                        { Color.red, "Help" },
+                        { Color.red, "Help" },
+                        { Color.red, "Help" }};*/
+
                 if(status.length() == 0){ //emtpy file list
                     fileLabel.setText("There are no files tracked yet");
                 }
                 else {
-                    Iterator itr = status.iterator();
-                    while(itr.hasNext()) {
-                        JSONObject file = (JSONObject)itr.next();
+                    //Iterator itr = status.iterator();
+                    //while(itr.hasNext()) {
+                    for(int i=0; i<status.length(); i++){ //
+                        JSONObject file = (JSONObject) status.get(i);//(JSONObject)itr.next();
                         String filename = file.getString("path");
                         if( !Arrays.stream(notListed).anyMatch(filename::equals) &&
                             !(filename.substring(filename.length()-4,filename.length()).equals(".dvc")))
-                            {
-                                files.add((String) filename);
-                            }
+                        {
+                            //files.add({Color.red,(String) filename});
+                            files[i][0] = Color.green;
+                            files[i][1] = (String) filename;
                         }
                     }
+                }
                 fileLabel.setText("Your tracked files:");
                 fileList.setListData(files);
-                }
+            }
         });
+        ListCellRenderer renderer = new ColoredListRenderer();
+        fileList.setCellRenderer(renderer);
+
         if(!commandRanCorrectly(response)){
             fileLabel.setText((String) response);
         }
@@ -173,5 +191,42 @@ public class DVCAddRemote {
             System.out.println("here");
             return errorMessage;
         }
+    }
+}
+
+class ColoredListRenderer implements ListCellRenderer {
+    protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+
+    public Component getListCellRendererComponent(JList list, Object value,
+                                                  int index, boolean isSelected, boolean cellHasFocus) {
+        //Font theFont = null;
+        Color theForeground = null;
+        //Icon theIcon = null;
+        String theText = null;
+
+        JLabel renderer = (JLabel) defaultRenderer
+                .getListCellRendererComponent(list, value, index, isSelected,
+                        cellHasFocus);
+
+        if (value instanceof Object[]) {
+            Object values[] = (Object[]) value;
+            //theFont = (Font) values[0];
+            theForeground = (Color) values[0];
+            //theIcon = (Icon) values[2];
+            theText = (String) values[1];
+        } else {
+            //theFont = list.getFont();
+            theForeground = list.getForeground();
+            theText = "";
+        }
+        if (!isSelected) {
+            renderer.setForeground(theForeground);
+        }
+        /*if (theIcon != null) {
+            renderer.setIcon(theIcon);
+        }*/
+        renderer.setText(theText);
+        //renderer.setFont(theFont);
+        return renderer;
     }
 }
