@@ -79,36 +79,31 @@ public class DVCAddRemote {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-                //Vector<{Color,String}> files = new Vector<>();
 
                 Object files[][] = new Object[status.length()][2];
-
-                /*Object files[][] = {
-                        { Color.red, "Help" },
-                        { Color.red, "Help" },
-                        { Color.red, "Help" },
-                        { Color.red, "Help" }};*/
 
                 if(status.length() == 0){ //emtpy file list
                     fileLabel.setText("There are no files tracked yet");
                 }
                 else {
-                    //Iterator itr = status.iterator();
-                    //while(itr.hasNext()) {
                     for(int i=0; i<status.length(); i++){ //
-                        JSONObject file = (JSONObject) status.get(i);//(JSONObject)itr.next();
+                        JSONObject file = (JSONObject) status.get(i);
                         String filename = file.getString("path");
+
+                        //TODO Parse DVC Status: get status per file
+
                         if( !Arrays.stream(notListed).anyMatch(filename::equals) &&
                             !(filename.substring(filename.length()-4,filename.length()).equals(".dvc")))
                         {
-                            //files.add({Color.red,(String) filename});
-                            files[i][0] = Color.green;
+                            //TODO : adapt color on status info
+                            Object fileColor = Color.green;
+                            files[i][0] = fileColor;
                             files[i][1] = (String) filename;
                         }
                     }
+                    fileLabel.setText("Your tracked files:");
+                    fileList.setListData(files);
                 }
-                fileLabel.setText("Your tracked files:");
-                fileList.setListData(files);
             }
         });
         ListCellRenderer renderer = new ColoredListRenderer();
@@ -167,7 +162,6 @@ public class DVCAddRemote {
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 super.onTextAvailable(event, outputType);
                 String commandOutput = event.getText();
-                System.out.println(commandOutput);
             }
         });
     }
