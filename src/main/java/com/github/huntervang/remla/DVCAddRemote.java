@@ -103,14 +103,12 @@ public class DVCAddRemote {
                     fileLabel.setText("There are no files tracked yet");
                 }
                 else {
+                    waitingForStatus = true;
+                    setDVCStatus();
+                    waitForStatus();
                     for(int i=0; i<status.length(); i++){ //
                         JSONObject file = (JSONObject) status.get(i);
                         String fileName = file.getString("path");
-
-                        waitingForStatus = true;
-                        setDVCStatus();
-                        waitForStatus();
-
                         Color fileColor;
 
                         if( dvcStatus.keySet().contains(fileName)){
@@ -158,7 +156,6 @@ public class DVCAddRemote {
                 super.onTextAvailable(event, outputType);
                 try {
                     String commandOutput = event.getText();
-                    System.out.println(commandOutput);
                     status = new JSONObject(commandOutput);
                     for(String dvcFile : status.keySet()) { //traverse json format output of dvc status (entry per *.dvc file)
                         JSONArray DVCFileStatus = (JSONArray) status.get(dvcFile);
