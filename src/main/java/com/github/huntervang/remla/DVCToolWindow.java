@@ -1,5 +1,8 @@
 package com.github.huntervang.remla;
 
+import static com.github.huntervang.remla.DVCAdd.openDvcAddFilePicker;
+
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 
 import java.util.Objects;
@@ -8,15 +11,15 @@ import java.util.Calendar;
 
 public class DVCToolWindow {
     private JButton refreshToolWindowButton;
-    private JButton hideToolWindowButton;
+    private JButton addButton;
     private JLabel currentDate;
     private JLabel currentTime;
     private JLabel timeZone;
     private JPanel dvcToolWindowContent;
 
-    public DVCToolWindow(ToolWindow toolWindow) {
-        hideToolWindowButton.addActionListener(e -> toolWindow.hide(null));
+    public DVCToolWindow(Project project, ToolWindow toolWindow) {
         refreshToolWindowButton.addActionListener(e -> currentDateTime());
+        addButton.addActionListener(e -> openDvcAddFilePicker(project));
 
         this.currentDateTime();
     }
