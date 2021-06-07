@@ -41,8 +41,8 @@ public class DVCAddRemote {
     private JScrollPane fileListScroller;
     private JList fileList;
     private JScrollPane changeListScroller;
-    private JList changeList;
     private JFileChooser fileChooser;
+    private JButton pushButton;
     private final Project project;
 
     private final String messageIfRanCorrectly = "";
@@ -59,6 +59,35 @@ public class DVCAddRemote {
         project = ProjectManager.getInstance().getOpenProjects()[0];
         addStorageButton.addActionListener(e -> dvcAddRemote());
         setDVCFileList(); //TODO set filelist is called in first render, should be applied on some trigger, but don't know which trigger
+        pushButton.addActionListener(e -> push());
+    }
+
+    private void push() {
+        for(int i=0; i<fileList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
+            CheckListItem item = (CheckListItem) fileList.getModel().getElementAt(i);
+            if(item.isSelected()){ //check if file is checked
+                String filename = item.toString();
+                String dvcListCommand = "dvc push " + filename;
+                String response = runConsoleCommand(dvcListCommand, new ProcessAdapter() {
+                    @Override
+                    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                        super.onTextAvailable(event, outputType);
+                        try {
+                            System.out.println(event.getText());
+                            //TODO parse command response
+                        }
+                        catch(org.json.JSONException e){
+                            //TODO on command failure
+                        }
+                    }
+                });
+
+                //TODO based on response: provide feedback
+                if(commandRanCorrectly(response)){
+                    System.out.println("command executed properly i guess");
+                }
+            }
+        }
     }
 
     private boolean commandRanCorrectly(String message){
