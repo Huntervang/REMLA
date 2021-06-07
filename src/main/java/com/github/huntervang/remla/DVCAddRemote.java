@@ -43,6 +43,7 @@ public class DVCAddRemote {
     private JScrollPane changeListScroller;
     private JFileChooser fileChooser;
     private JButton pushButton;
+    private JButton pullButton;
     private final Project project;
 
     private final String messageIfRanCorrectly = "";
@@ -60,6 +61,7 @@ public class DVCAddRemote {
         addStorageButton.addActionListener(e -> dvcAddRemote());
         setDVCFileList(); //TODO set filelist is called in first render, should be applied on some trigger, but don't know which trigger
         pushButton.addActionListener(e -> push());
+        pullButton.addActionListener(e -> pull());
     }
 
     private void push() {
@@ -87,6 +89,28 @@ public class DVCAddRemote {
                     System.out.println("command executed properly i guess");
                 }
             }
+        }
+    }
+
+    private void pull() {
+        String dvcListCommand = "dvc pull";
+        String response = runConsoleCommand(dvcListCommand, new ProcessAdapter() {
+            @Override
+            public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                super.onTextAvailable(event, outputType);
+                try {
+                    System.out.println(event.getText());
+                    //TODO parse command response
+                }
+                catch(org.json.JSONException e){
+                    //TODO on command failure
+                }
+            }
+        });
+
+        //TODO based on response: provide feedback
+        if(commandRanCorrectly(response)){
+            System.out.println("command executed properly i guess");
         }
     }
 
