@@ -17,13 +17,17 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.ListCellRenderer;
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.Color;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.HashMap;
-import java.awt.Color;
+
+import java.util.ArrayList;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -93,7 +97,7 @@ public class DVCAddRemote {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-                Object files[][] = new Object[status.length()][2];
+                CheckListItem[] files = new CheckListItem[status.length()];
 
                 if(status.length() == 0){ //emtpy file list
                     fileLabel.setText("There are no files tracked yet");
@@ -107,27 +111,17 @@ public class DVCAddRemote {
                         setDVCStatus();
                         waitForStatus();
 
-                        //if( !Arrays.stream(notListed).anyMatch(filename::equals) &&
-                        //    !(filename.substring(filename.length()-4,filename.length()).equals(".dvc")))
-                        Object fileColor;
-                        System.out.println(dvcStatus.keySet());
-                        System.out.println("filename check:" + fileName);
+                        Color fileColor;
 
                         if( dvcStatus.keySet().contains(fileName)){
                             String fileStatus = dvcStatus.get(fileName);
 
                             fileColor = colorMap.get(fileStatus);
-
-                            System.out.println("filecolor:" + fileColor);
-                            System.out.println("filename:" + fileName);
-
                         }
                         else{
                             fileColor = Color.green;
-                            System.out.println("regular");
                         }
-                        files[i][0] = fileColor;
-                        files[i][1] = (String) fileName;
+                        files[i] = new CheckListItem(fileName, fileColor);
                     }
                     fileLabel.setText("Your tracked files:");
                     fileList.setListData(files);
@@ -136,11 +130,22 @@ public class DVCAddRemote {
         });
         ListCellRenderer renderer = new ColoredListRenderer();
         fileList.setCellRenderer(renderer);
+        fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        fileList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                JList list = (JList) event.getSource();
+                int index = list.locationToIndex(event.getPoint());// Get index of item
+                // clicked
+                CheckListItem item = (CheckListItem) list.getModel().getElementAt(index);
+                item.setSelected(!item.isSelected()); // Toggle selected state
+                list.repaint(list.getCellBounds(index, index));// Repaint cell
+            }
+        });
 
         if(!commandRanCorrectly(response)){
             fileLabel.setText((String) response);
         }
-        waitForStatus();
     }
 
     //TODO parse DVC status and handle differences
@@ -218,8 +223,36 @@ public class DVCAddRemote {
     }
 }
 
-class ColoredListRenderer implements ListCellRenderer {
-    protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+class CheckListItem {
+    private String label;
+    private boolean isSelected = false;
+    private Color color;
+
+    public CheckListItem(String label, Color color) {
+        this.label = label;
+        this.color = color;
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean isSelected) {
+        this.isSelected = isSelected;
+    }
+
+    public Color color() {
+        return this.color;
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
+}
+
+class ColoredListRenderer extends JCheckBox implements ListCellRenderer {
+    //protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
 
     public Component getListCellRendererComponent(JList list, Object value,
                                                   int index, boolean isSelected, boolean cellHasFocus) {
@@ -228,29 +261,39 @@ class ColoredListRenderer implements ListCellRenderer {
         //Icon theIcon = null;
         String theText = null;
 
-        JLabel renderer = (JLabel) defaultRenderer
+        /*JCheckBox renderer = (JCheckBox) defaultRenderer
                 .getListCellRendererComponent(list, value, index, isSelected,
                         cellHasFocus);
-
+        */
         if (value instanceof Object[]) {
             Object values[] = (Object[]) value;
             //theFont = (Font) values[0];
             theForeground = (Color) values[0];
             //theIcon = (Icon) values[2];
             theText = (String) values[1];
+        } if (value instanceof CheckListItem) {
+            theForeground = ((CheckListItem) value).color();
+            //theIcon = (Icon) values[2];
+            theText = value.toString();
         } else {
             //theFont = list.getFont();
             theForeground = list.getForeground();
             theText = "";
         }
-        if (!isSelected) {
+        /*if (!isSelected) {
             renderer.setForeground(theForeground);
-        }
+        }*/
         /*if (theIcon != null) {
             renderer.setIcon(theIcon);
         }*/
-        renderer.setText(theText);
+        setText(theText);
         //renderer.setFont(theFont);
-        return renderer;
+        setEnabled(list.isEnabled());
+        setSelected(((CheckListItem) value).isSelected());
+        setBackground(list.getBackground());
+        setForeground(theForeground);
+        //renderer.setText(value.toString());
+
+        return this;
     }
 }
