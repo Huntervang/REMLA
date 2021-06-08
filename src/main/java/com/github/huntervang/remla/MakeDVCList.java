@@ -21,6 +21,7 @@ public class MakeDVCList {
     private JPanel filePanel;
     private JLabel fileLabel;
     private JList<CheckListItem> fileList;
+    private JButton pushButton;
     private final Project project;
 
     private final HashMap<String, Color> colorMap = new HashMap<String, Color>() {{
@@ -36,6 +37,36 @@ public class MakeDVCList {
         project = thisProject;
         setDVCFileList(); //TODO set filelist is called in first render,
                           // should be applied on some trigger, but don't know which trigger
+        pushButton.addActionListener(e -> push());
+
+    }
+
+    private void push() {
+        for(int i=0; i<fileList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
+            CheckListItem item = (CheckListItem) fileList.getModel().getElementAt(i);
+            if(item.isSelected()){ //check if file is checked
+                String filename = item.toString();
+                String dvcListCommand = "dvc push " + filename;
+                String response = Util.runConsoleCommand(dvcListCommand,".", new ProcessAdapter() {
+                    @Override
+                    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                        super.onTextAvailable(event, outputType);
+                        try {
+                            System.out.println(event.getText());
+                            //TODO parse command response
+                        }
+                        catch(org.json.JSONException e){
+                            //TODO on command failure
+                        }
+                    }
+                });
+
+                //TODO based on response: provide feedback
+                if(Util.commandRanCorrectly(response)){
+                    System.out.println("command executed properly i guess");
+                }
+            }
+        }
     }
 
     //wait for the setDVCStatus function to perform "DVC status" which is executed async,
@@ -118,7 +149,6 @@ public class MakeDVCList {
         }
     }
 
-    //TODO parse DVC status and handle differences
     private void setDVCStatus() {
         String dvcStatusCommand = "dvc status --show-json";
         String response = Util.runConsoleCommand(dvcStatusCommand, project.getBasePath(), new ProcessAdapter() {
