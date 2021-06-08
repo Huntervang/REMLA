@@ -15,11 +15,19 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
      * @param toolWindow current tool window
      */
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-        DVCToolWindow dvcToolWindow = new DVCToolWindow(project, toolWindow);
-        DVCAddRemote dvcAddRemote = new DVCAddRemote(project, toolWindow);
-        DVCAddRemote dvcList = new MakeDVCList(project, toolWindow);
-
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+
+        /*
+        DVCToolWindow dvcToolWindow = new DVCToolWindow(project, toolWindow);
+        Content content = contentFactory.createContent(dvcToolWindow.getContent(), "", false);
+        toolWindow.getContentManager().addContent(content);
+
+        DVCAddRemote dvcAddRemote = new DVCAddRemote(toolWindow);
+        content = contentFactory.createContent(dvcAddRemote.getContent(), "", false);
+        toolWindow.getContentManager().addContent(content);
+         */
+
+        MakeDVCList dvcList = new MakeDVCList(project);
         Content content = contentFactory.createContent(dvcList.getContent(), "", false);
         toolWindow.getContentManager().addContent(content);
     }

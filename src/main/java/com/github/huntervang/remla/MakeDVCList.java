@@ -1,25 +1,41 @@
 package com.github.huntervang.remla;
 
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.Color;
+import java.util.HashMap;
+
+import org.json.JSONObject;
+import org.json.JSONArray;
+
 public class MakeDVCList {
     private JPanel filePanel;
     private JLabel fileLabel;
-    private JScrollPane fileListScroller;
-    private JList fileList;
+    private JList<CheckListItem> fileList;
     private final Project project;
 
-    private final String[] notListed = {".gitignore", ".dvcignore"};
-    private HashMap<String, Color> colorMap = new HashMap<String, Color>() {{
-                put("new" , Color.green);
-                put("modified" , Color.blue);
-                put("deleted" , Color.gray);
-                put("not in cache" , Color.red); }};
+    private final HashMap<String, Color> colorMap = new HashMap<String, Color>() {{
+        put("new" , JBColor.GREEN);
+        put("modified" , JBColor.BLUE);
+        put("deleted" , JBColor.GRAY);
+        put("not in cache" , JBColor.RED); }};
 
     private boolean waitingForStatus = true;
-    private HashMap<String, String> dvcStatus = new HashMap<>();
-    private final Project project;
+    private final HashMap<String, String> dvcStatus = new HashMap<>();
 
-    public MakeDVCList(Project project){
-        project = project;
+    public MakeDVCList(Project thisProject){
+        project = thisProject;
+        setDVCFileList(); //TODO set filelist is called in first render,
+                          // should be applied on some trigger, but don't know which trigger
     }
 
     //wait for the setDVCStatus function to perform "DVC status" which is executed async,
@@ -68,13 +84,13 @@ public class MakeDVCList {
                         String fileName = file.getString("path");
                         Color fileColor;
 
-                        if( dvcStatus.keySet().contains(fileName)){
+                        if( dvcStatus.containsKey(fileName)){
                             String fileStatus = dvcStatus.get(fileName);
 
                             fileColor = colorMap.get(fileStatus);
                         }
                         else{
-                            fileColor = Color.green;
+                            fileColor = JBColor.GREEN;
                         }
                         files[i] = new CheckListItem(fileName, fileColor);
                     }
@@ -83,8 +99,7 @@ public class MakeDVCList {
                 }
             }
         });
-        ListCellRenderer renderer = new ColoredListRenderer();
-        fileList.setCellRenderer(renderer);
+        fileList.setCellRenderer(new ColoredListRenderer());
         fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fileList.addMouseListener(new MouseAdapter() {
             @Override
@@ -99,7 +114,7 @@ public class MakeDVCList {
         });
 
         if(!Util.commandRanCorrectly(response)){
-            fileLabel.setText((String) response);
+            fileLabel.setText(response);
         }
     }
 
@@ -137,16 +152,19 @@ public class MakeDVCList {
             }
         });
         if(!Util.commandRanCorrectly(response)){
-            fileLabel.setText((String) response);
+            fileLabel.setText(response);
         }
 
+    }
+    public JPanel getContent() {
+        return filePanel;
     }
 }
 
 class CheckListItem {
-    private String label;
+    private final String label;
     private boolean isSelected = false;
-    private Color color;
+    private final Color color;
 
     public CheckListItem(String label, Color color) {
         this.label = label;
@@ -176,22 +194,12 @@ class ColoredListRenderer extends JCheckBox implements ListCellRenderer {
 
     public Component getListCellRendererComponent(JList list, Object value,
                                                   int index, boolean isSelected, boolean cellHasFocus) {
-        //Font theFont = null;
-        Color theForeground = null;
-        //Icon theIcon = null;
-        String theText = null;
+        //Font theFont;
+        Color theForeground;
+        //Icon theIcon;
+        String theText;
 
-        /*JCheckBox renderer = (JCheckBox) defaultRenderer
-                .getListCellRendererComponent(list, value, index, isSelected,
-                        cellHasFocus);
-        */
-        if (value instanceof Object[]) {
-            Object values[] = (Object[]) value;
-            //theFont = (Font) values[0];
-            theForeground = (Color) values[0];
-            //theIcon = (Icon) values[2];
-            theText = (String) values[1];
-        } if (value instanceof CheckListItem) {
+        if (value instanceof CheckListItem) {
             theForeground = ((CheckListItem) value).color();
             //theIcon = (Icon) values[2];
             theText = value.toString();
@@ -216,9 +224,4 @@ class ColoredListRenderer extends JCheckBox implements ListCellRenderer {
 
         return this;
     }
-
-    public JPanel getContent() {
-        return filePanel;
-    }
-
 }
