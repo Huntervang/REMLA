@@ -4,6 +4,9 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.List;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -21,6 +25,7 @@ public class MakeDVCList {
     private JPanel filePanel;
     private JLabel fileLabel;
     private JList<CheckListItem> fileList;
+    private JButton pushButton;
     private final Project project;
 
     private final HashMap<String, Color> colorMap = new HashMap<String, Color>() {{
@@ -36,6 +41,46 @@ public class MakeDVCList {
         project = thisProject;
         setDVCFileList(); //TODO set filelist is called in first render,
                           // should be applied on some trigger, but don't know which trigger
+        pushButton.addActionListener(e -> push());
+
+        project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+            @Override
+            public void after(@NotNull List<? extends VFileEvent> events) {
+                refresh();
+            }
+        });
+    }
+
+    private void refresh(){
+        setDVCFileList();
+    }
+
+    private void push() {
+        for(int i=0; i<fileList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
+            CheckListItem item = (CheckListItem) fileList.getModel().getElementAt(i);
+            if(item.isSelected()){ //check if file is checked
+                String filename = item.toString();
+                String dvcListCommand = "dvc push " + filename;
+                String response = Util.runConsoleCommand(dvcListCommand,".", new ProcessAdapter() {
+                    @Override
+                    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                        super.onTextAvailable(event, outputType);
+                        try {
+                            System.out.println(event.getText());
+                            //TODO parse command response
+                        }
+                        catch(org.json.JSONException e){
+                            //TODO on command failure
+                        }
+                    }
+                });
+
+                //TODO based on response: provide feedback
+                if(Util.commandRanCorrectly(response)){
+                    System.out.println("command executed properly i guess");
+                }
+            }
+        }
     }
 
     //wait for the setDVCStatus function to perform "DVC status" which is executed async,
@@ -118,7 +163,6 @@ public class MakeDVCList {
         }
     }
 
-    //TODO parse DVC status and handle differences
     private void setDVCStatus() {
         String dvcStatusCommand = "dvc status --show-json";
         String response = Util.runConsoleCommand(dvcStatusCommand, project.getBasePath(), new ProcessAdapter() {
@@ -159,69 +203,69 @@ public class MakeDVCList {
     public JPanel getContent() {
         return filePanel;
     }
-}
 
-class CheckListItem {
-    private final String label;
-    private boolean isSelected = false;
-    private final Color color;
+    private static class CheckListItem {
+        private final String label;
+        private boolean isSelected = false;
+        private final Color color;
 
-    public CheckListItem(String label, Color color) {
-        this.label = label;
-        this.color = color;
-    }
-
-    public boolean isSelected() {
-        return isSelected;
-    }
-
-    public void setSelected(boolean isSelected) {
-        this.isSelected = isSelected;
-    }
-
-    public Color color() {
-        return this.color;
-    }
-
-    @Override
-    public String toString() {
-        return label;
-    }
-}
-
-class ColoredListRenderer extends JCheckBox implements ListCellRenderer {
-    //protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
-
-    public Component getListCellRendererComponent(JList list, Object value,
-                                                  int index, boolean isSelected, boolean cellHasFocus) {
-        //Font theFont;
-        Color theForeground;
-        //Icon theIcon;
-        String theText;
-
-        if (value instanceof CheckListItem) {
-            theForeground = ((CheckListItem) value).color();
-            //theIcon = (Icon) values[2];
-            theText = value.toString();
-        } else {
-            //theFont = list.getFont();
-            theForeground = list.getForeground();
-            theText = "";
+        public CheckListItem(String label, Color color) {
+            this.label = label;
+            this.color = color;
         }
+
+        public boolean isSelected() {
+            return isSelected;
+        }
+
+        public void setSelected(boolean isSelected) {
+            this.isSelected = isSelected;
+        }
+
+        public Color color() {
+            return this.color;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    private static class ColoredListRenderer extends JCheckBox implements ListCellRenderer {
+        //protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+
+        public Component getListCellRendererComponent(JList list, Object value,
+                                                      int index, boolean isSelected, boolean cellHasFocus) {
+            //Font theFont;
+            Color theForeground;
+            //Icon theIcon;
+            String theText;
+
+            if (value instanceof CheckListItem) {
+                theForeground = ((CheckListItem) value).color();
+                //theIcon = (Icon) values[2];
+                theText = value.toString();
+            } else {
+                //theFont = list.getFont();
+                theForeground = list.getForeground();
+                theText = "";
+            }
         /*if (!isSelected) {
             renderer.setForeground(theForeground);
         }*/
         /*if (theIcon != null) {
             renderer.setIcon(theIcon);
         }*/
-        setText(theText);
-        //renderer.setFont(theFont);
-        setEnabled(list.isEnabled());
-        setSelected(((CheckListItem) value).isSelected());
-        setBackground(list.getBackground());
-        setForeground(theForeground);
-        //renderer.setText(value.toString());
+            setText(theText);
+            //renderer.setFont(theFont);
+            setEnabled(list.isEnabled());
+            setSelected(((CheckListItem) value).isSelected());
+            setBackground(list.getBackground());
+            setForeground(theForeground);
+            //renderer.setText(value.toString());
 
-        return this;
+            return this;
+        }
     }
 }
