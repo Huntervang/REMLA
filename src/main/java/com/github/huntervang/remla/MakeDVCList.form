@@ -15,11 +15,9 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="a8f4f" class="javax.swing.JList" binding="fileList">
+          <component id="aedc3" class="com.intellij.ui.CheckBoxList" binding="checkBoxList">
             <constraints/>
-            <properties>
-              <model/>
-            </properties>
+            <properties/>
           </component>
         </children>
       </scrollpane>

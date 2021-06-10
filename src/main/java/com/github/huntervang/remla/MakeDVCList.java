@@ -7,13 +7,19 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.Insets;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.Component;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.List;
@@ -24,8 +30,8 @@ import org.json.JSONArray;
 public class MakeDVCList {
     private JPanel filePanel;
     private JLabel fileLabel;
-    private JList<CheckListItem> fileList;
     private JButton pushButton;
+    private CheckBoxList<CheckListItem> checkBoxList;
     private final Project project;
 
     private final HashMap<String, Color> colorMap = new HashMap<String, Color>() {{
@@ -34,14 +40,16 @@ public class MakeDVCList {
         put("deleted" , JBColor.GRAY);
         put("not in cache" , JBColor.RED); }};
 
-    private boolean waitingForStatus = true;
     private final HashMap<String, String> dvcStatus = new HashMap<>();
 
     public MakeDVCList(Project thisProject){
         project = thisProject;
-        setDVCFileList(); //TODO set filelist is called in first render,
-                          // should be applied on some trigger, but don't know which trigger
+        runDVCStatusAndList(); //TODO set filelist is called in first render,
+                               // should be applied on some trigger, but don't know which trigger
         pushButton.addActionListener(e -> push());
+
+        checkBoxList.setCellRenderer(new ColoredListRenderer());
+        checkBoxList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
             @Override
@@ -52,48 +60,39 @@ public class MakeDVCList {
     }
 
     private void refresh(){
-        setDVCFileList();
+        runDVCStatusAndList();
     }
 
     private void push() {
-        for(int i=0; i<fileList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
-            CheckListItem item = (CheckListItem) fileList.getModel().getElementAt(i);
-            if(item.isSelected()){ //check if file is checked
-                String filename = item.toString();
-                String dvcListCommand = "dvc push " + filename;
-                String response = Util.runConsoleCommand(dvcListCommand,".", new ProcessAdapter() {
-                    @Override
-                    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                        super.onTextAvailable(event, outputType);
-                        try {
-                            System.out.println(event.getText());
-                            //TODO parse command response
-                        }
-                        catch(org.json.JSONException e){
-                            //TODO on command failure
-                        }
-                    }
-                });
-
-                //TODO based on response: provide feedback
-                if(Util.commandRanCorrectly(response)){
-                    System.out.println("command executed properly i guess");
-                }
-            }
-        }
+//        for(int i=0; i<fileList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
+//            CheckListItem item = (CheckListItem) fileList.getModel().getElementAt(i);
+//            if(item.isSelected()){ //check if file is checked
+//                String filename = item.toString();
+//                String dvcListCommand = "dvc push " + filename;
+//                String response = Util.runConsoleCommand(dvcListCommand,".", new ProcessAdapter() {
+//                    @Override
+//                    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+//                        super.onTextAvailable(event, outputType);
+//                        try {
+//                            System.out.println(event.getText());
+//                            //TODO parse command response
+//                        }
+//                        catch(org.json.JSONException e){
+//                            //TODO on command failure
+//                        }
+//                    }
+//                });
+//
+//                //TODO based on response: provide feedback
+//                if(Util.commandRanCorrectly(response)){
+//                    System.out.println("command executed properly i guess");
+//                }
+//            }
+//        }
     }
 
-    //wait for the setDVCStatus function to perform "DVC status" which is executed async,
-    // but DVCFileList needs the information causing a race condition
-    private void waitForStatus(){
-        while(waitingForStatus){
-            try {
-                Thread.sleep(0);
-            }
-            catch(InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }
-        }
+    private void runDVCStatusAndList() {
+        setDVCStatus(this::setDVCFileList);
     }
 
     private void setDVCFileList() {
@@ -115,46 +114,30 @@ public class MakeDVCList {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-                CheckListItem[] files = new CheckListItem[status.length()];
+                checkBoxList.clear();
 
-                if(status.length() == 0){ //emtpy file list
+                if (status.length() == 0){ //emtpy file list
                     fileLabel.setText("There are no files tracked yet");
+                    return;
                 }
-                else {
-                    waitingForStatus = true;
-                    setDVCStatus();
-                    waitForStatus();
-                    for(int i=0; i<status.length(); i++){ //
-                        JSONObject file = (JSONObject) status.get(i);
-                        String fileName = file.getString("path");
-                        Color fileColor;
 
-                        if( dvcStatus.containsKey(fileName)){
-                            String fileStatus = dvcStatus.get(fileName);
+                fileLabel.setText("Your tracked files:");
 
-                            fileColor = colorMap.get(fileStatus);
-                        }
-                        else{
-                            fileColor = JBColor.GREEN;
-                        }
-                        files[i] = new CheckListItem(fileName, fileColor);
+                for (Object o : status) {
+                    JSONObject file = (JSONObject) o;
+                    String fileName = file.getString("path");
+
+                    Color fileColor;
+                    if (dvcStatus.containsKey(fileName)) {
+                        String fileStatus = dvcStatus.get(fileName);
+                        fileColor = colorMap.get(fileStatus);
+                    } else {
+                        fileColor = JBColor.GREEN;
                     }
-                    fileLabel.setText("Your tracked files:");
-                    fileList.setListData(files);
+
+                    CheckListItem checkListItem = new CheckListItem(fileName, fileColor);
+                    checkBoxList.addItem(checkListItem, fileName, false);
                 }
-            }
-        });
-        fileList.setCellRenderer(new ColoredListRenderer());
-        fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        fileList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                JList list = (JList) event.getSource();
-                int index = list.locationToIndex(event.getPoint());// Get index of item
-                // clicked
-                CheckListItem item = (CheckListItem) list.getModel().getElementAt(index);
-                item.setSelected(!item.isSelected()); // Toggle selected state
-                list.repaint(list.getCellBounds(index, index));// Repaint cell
             }
         });
 
@@ -163,7 +146,7 @@ public class MakeDVCList {
         }
     }
 
-    private void setDVCStatus() {
+    private void setDVCStatus(Runnable runnable) {
         String dvcStatusCommand = "dvc status --show-json";
         String response = Util.runConsoleCommand(dvcStatusCommand, project.getBasePath(), new ProcessAdapter() {
             JSONObject status;
@@ -192,7 +175,7 @@ public class MakeDVCList {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-                waitingForStatus = false;
+                runnable.run();
             }
         });
         if(!Util.commandRanCorrectly(response)){
@@ -206,20 +189,11 @@ public class MakeDVCList {
 
     private static class CheckListItem {
         private final String label;
-        private boolean isSelected = false;
         private final Color color;
 
         public CheckListItem(String label, Color color) {
             this.label = label;
             this.color = color;
-        }
-
-        public boolean isSelected() {
-            return isSelected;
-        }
-
-        public void setSelected(boolean isSelected) {
-            this.isSelected = isSelected;
         }
 
         public Color color() {
@@ -232,40 +206,44 @@ public class MakeDVCList {
         }
     }
 
-    private static class ColoredListRenderer extends JCheckBox implements ListCellRenderer {
-        //protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+    private class ColoredListRenderer implements ListCellRenderer<JCheckBox> {
+        private final Border mySelectedBorder;
+        private final Border myBorder;
 
-        public Component getListCellRendererComponent(JList list, Object value,
-                                                      int index, boolean isSelected, boolean cellHasFocus) {
-            //Font theFont;
-            Color theForeground;
-            //Icon theIcon;
-            String theText;
+        private ColoredListRenderer() {
+            mySelectedBorder = UIManager.getBorder("List.focusCellHighlightBorder");
+            Insets myBorderInsets = mySelectedBorder.getBorderInsets(new JCheckBox());
+            myBorder = new EmptyBorder(myBorderInsets);
+        }
 
-            if (value instanceof CheckListItem) {
-                theForeground = ((CheckListItem) value).color();
-                //theIcon = (Icon) values[2];
-                theText = value.toString();
+        @Override
+        public Component getListCellRendererComponent(JList list, JCheckBox checkbox, int index, boolean isSelected, boolean cellHasFocus) {
+            Color textColor;
+
+            CheckListItem checkListItem = checkBoxList.getItemAt(index);
+            if (checkListItem != null) {
+                textColor = checkListItem.color();
             } else {
-                //theFont = list.getFont();
-                theForeground = list.getForeground();
-                theText = "";
+                textColor = list.getForeground();
             }
-        /*if (!isSelected) {
-            renderer.setForeground(theForeground);
-        }*/
-        /*if (theIcon != null) {
-            renderer.setIcon(theIcon);
-        }*/
-            setText(theText);
-            //renderer.setFont(theFont);
-            setEnabled(list.isEnabled());
-            setSelected(((CheckListItem) value).isSelected());
-            setBackground(list.getBackground());
-            setForeground(theForeground);
-            //renderer.setText(value.toString());
 
-            return this;
+            Color backgroundColor = list.getBackground();
+
+            Font font = checkBoxList.getFont();
+            checkbox.setBackground(backgroundColor);
+            checkbox.setForeground(textColor);
+            checkbox.setEnabled(list.isEnabled());
+            checkbox.setFont(font);
+            checkbox.setFocusPainted(false);
+            checkbox.setBorderPainted(false);
+            checkbox.setOpaque(true);
+
+            checkbox.setBorder(isSelected ? mySelectedBorder : myBorder);
+
+            boolean isRollOver = checkbox.getModel().isRollover();
+            checkbox.getModel().setRollover(isRollOver);
+
+            return checkbox;
         }
     }
 }
