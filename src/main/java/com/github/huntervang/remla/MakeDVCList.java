@@ -189,69 +189,69 @@ public class MakeDVCList {
     public JPanel getContent() {
         return filePanel;
     }
-}
 
-class CheckListItem {
-    private final String label;
-    private boolean isSelected = false;
-    private final Color color;
+    private static class CheckListItem {
+        private final String label;
+        private boolean isSelected = false;
+        private final Color color;
 
-    public CheckListItem(String label, Color color) {
-        this.label = label;
-        this.color = color;
-    }
-
-    public boolean isSelected() {
-        return isSelected;
-    }
-
-    public void setSelected(boolean isSelected) {
-        this.isSelected = isSelected;
-    }
-
-    public Color color() {
-        return this.color;
-    }
-
-    @Override
-    public String toString() {
-        return label;
-    }
-}
-
-class ColoredListRenderer extends JCheckBox implements ListCellRenderer {
-    //protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
-
-    public Component getListCellRendererComponent(JList list, Object value,
-                                                  int index, boolean isSelected, boolean cellHasFocus) {
-        //Font theFont;
-        Color theForeground;
-        //Icon theIcon;
-        String theText;
-
-        if (value instanceof CheckListItem) {
-            theForeground = ((CheckListItem) value).color();
-            //theIcon = (Icon) values[2];
-            theText = value.toString();
-        } else {
-            //theFont = list.getFont();
-            theForeground = list.getForeground();
-            theText = "";
+        public CheckListItem(String label, Color color) {
+            this.label = label;
+            this.color = color;
         }
+
+        public boolean isSelected() {
+            return isSelected;
+        }
+
+        public void setSelected(boolean isSelected) {
+            this.isSelected = isSelected;
+        }
+
+        public Color color() {
+            return this.color;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    private static class ColoredListRenderer extends JCheckBox implements ListCellRenderer {
+        //protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+
+        public Component getListCellRendererComponent(JList list, Object value,
+                                                      int index, boolean isSelected, boolean cellHasFocus) {
+            //Font theFont;
+            Color theForeground;
+            //Icon theIcon;
+            String theText;
+
+            if (value instanceof CheckListItem) {
+                theForeground = ((CheckListItem) value).color();
+                //theIcon = (Icon) values[2];
+                theText = value.toString();
+            } else {
+                //theFont = list.getFont();
+                theForeground = list.getForeground();
+                theText = "";
+            }
         /*if (!isSelected) {
             renderer.setForeground(theForeground);
         }*/
         /*if (theIcon != null) {
             renderer.setIcon(theIcon);
         }*/
-        setText(theText);
-        //renderer.setFont(theFont);
-        setEnabled(list.isEnabled());
-        setSelected(((CheckListItem) value).isSelected());
-        setBackground(list.getBackground());
-        setForeground(theForeground);
-        //renderer.setText(value.toString());
+            setText(theText);
+            //renderer.setFont(theFont);
+            setEnabled(list.isEnabled());
+            setSelected(((CheckListItem) value).isSelected());
+            setBackground(list.getBackground());
+            setForeground(theForeground);
+            //renderer.setText(value.toString());
 
-        return this;
+            return this;
+        }
     }
 }
