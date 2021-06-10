@@ -6,12 +6,14 @@ import com.intellij.openapi.wm.ToolWindow;
 import javax.swing.*;
 
 import static com.github.huntervang.remla.DVCAdd.openDvcAddFilePicker;
+import static com.github.huntervang.remla.DVCRemove.openDvcRemoveFilePicker;
 
 public class DVCToolWindow {
     private JPanel dvcToolWindowContent;
     private JPanel addRemote;
     private JPanel filePanel;
     private JButton addButton;
+    private JButton removeButton;
     Project project;
     ToolWindow toolWindow;
 
@@ -19,6 +21,7 @@ public class DVCToolWindow {
         project = newproject;
         toolWindow =newtoolWindow;
         addButton.addActionListener(e -> openDvcAddFilePicker(project));
+        removeButton.addActionListener(e -> openDvcRemoveFilePicker(project));
 
     }
 
