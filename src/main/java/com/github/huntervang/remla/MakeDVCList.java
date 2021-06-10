@@ -17,6 +17,7 @@ import java.awt.event.MouseEvent;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -51,7 +52,7 @@ public class MakeDVCList {
         });
     }
 
-    private void refresh(){
+    public void refresh(){
         setDVCFileList();
     }
 
@@ -115,6 +116,12 @@ public class MakeDVCList {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
+                Vector<String> checkedFiles = new Vector<>();
+                for(int i=0; i<fileList.getModel().getSize(); i++){
+                    if(fileList.getModel().getElementAt(i).isSelected()){
+                        checkedFiles.add(fileList.getModel().getElementAt(i).toString());
+                    }
+                }
                 CheckListItem[] files = new CheckListItem[status.length()];
 
                 if(status.length() == 0){ //emtpy file list
@@ -131,13 +138,16 @@ public class MakeDVCList {
 
                         if( dvcStatus.containsKey(fileName)){
                             String fileStatus = dvcStatus.get(fileName);
-
                             fileColor = colorMap.get(fileStatus);
                         }
                         else{
                             fileColor = JBColor.GREEN;
                         }
                         files[i] = new CheckListItem(fileName, fileColor);
+                        if(checkedFiles.contains(fileName)){
+                            files[i].setSelected(true);
+                        }
+
                     }
                     fileLabel.setText("Your tracked files:");
                     fileList.setListData(files);
@@ -198,7 +208,6 @@ public class MakeDVCList {
         if(!Util.commandRanCorrectly(response)){
             fileLabel.setText(response);
         }
-
     }
     public JPanel getContent() {
         return filePanel;
