@@ -5,12 +5,29 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.wm.WindowManager;
+
+import java.awt.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Util {
     public static final String COMMAND_RAN_CORRECTLY = "";
+
+    public static Project getProject() {
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        Project activeProject = null;
+        for (Project project : projects) {
+            Window window = WindowManager.getInstance().suggestParentWindow(project);
+            if (window != null && window.isActive()) {
+                activeProject = project;
+            }
+        }
+        return activeProject;
+    }
 
     public static String runConsoleCommand(String command, String workingDirectory, ProcessAdapter processAdapter) {
         try {
