@@ -65,31 +65,31 @@ public class MakeDVCList {
     }
 
     private void push() {
-//        for(int i=0; i<fileList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
-//            CheckListItem item = (CheckListItem) fileList.getModel().getElementAt(i);
-//            if(item.isSelected()){ //check if file is checked
-//                String filename = item.toString();
-//                String dvcListCommand = "dvc push " + filename;
-//                String response = Util.runConsoleCommand(dvcListCommand,".", new ProcessAdapter() {
-//                    @Override
-//                    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-//                        super.onTextAvailable(event, outputType);
-//                        try {
-//                            System.out.println(event.getText());
-//                            //TODO parse command response
-//                        }
-//                        catch(org.json.JSONException e){
-//                            //TODO on command failure
-//                        }
-//                    }
-//                });
-//
-//                //TODO based on response: provide feedback
-//                if(Util.commandRanCorrectly(response)){
-//                    System.out.println("command executed properly i guess");
-//                }
-//            }
-//        }
+        for(int i=0; i<checkBoxList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
+            CheckListItem item = checkBoxList.getItemAt(i);
+            if(checkBoxList.isItemSelected(i) && item != null){ //check if file is checked
+                String filename = item.toString();
+                String dvcListCommand = "dvc push " + filename;
+                String response = Util.runConsoleCommand(dvcListCommand,".", new ProcessAdapter() {
+                    @Override
+                    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                        super.onTextAvailable(event, outputType);
+                        try {
+                            System.out.println(event.getText());
+                            //TODO parse command response
+                        }
+                        catch(org.json.JSONException e){
+                            //TODO on command failure
+                        }
+                    }
+                });
+
+                //TODO based on response: provide feedback
+                if(Util.commandRanCorrectly(response)){
+                    System.out.println("command executed properly i guess");
+                }
+            }
+        }
     }
 
     private void runDVCStatusAndList() {
@@ -236,7 +236,7 @@ public class MakeDVCList {
                 textColor = list.getForeground();
             }
 
-            Color backgroundColor = list.getBackground();
+            Color backgroundColor = isSelected ? list.getSelectionBackground() : list.getBackground();
 
             Font font = checkBoxList.getFont();
             checkbox.setBackground(backgroundColor);
