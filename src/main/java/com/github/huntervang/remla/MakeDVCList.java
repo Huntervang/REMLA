@@ -4,6 +4,9 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.List;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -39,6 +43,16 @@ public class MakeDVCList {
                           // should be applied on some trigger, but don't know which trigger
         pushButton.addActionListener(e -> push());
 
+        project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+            @Override
+            public void after(@NotNull List<? extends VFileEvent> events) {
+                refresh();
+            }
+        });
+    }
+
+    private void refresh(){
+        setDVCFileList();
     }
 
     private void push() {
