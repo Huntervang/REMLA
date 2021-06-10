@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -114,7 +115,16 @@ public class MakeDVCList {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
+
                 checkBoxList.clear();
+
+                Vector<String> checkedFiles = new Vector<>();
+                for(int i=0; i< checkBoxList.getModel().getSize(); i++){
+                    JCheckBox checkBox = checkBoxList.getModel().getElementAt(i);
+                    if (checkBox.isSelected()) {
+                        checkedFiles.add(checkBox.toString());
+                    }
+                }
 
                 if (status.length() == 0){ //emtpy file list
                     fileLabel.setText("There are no files tracked yet");
@@ -136,7 +146,7 @@ public class MakeDVCList {
                     }
 
                     CheckListItem checkListItem = new CheckListItem(fileName, fileColor);
-                    checkBoxList.addItem(checkListItem, fileName, false);
+                    checkBoxList.addItem(checkListItem, fileName, checkedFiles.contains(fileName));
                 }
             }
         });
@@ -181,7 +191,6 @@ public class MakeDVCList {
         if(!Util.commandRanCorrectly(response)){
             fileLabel.setText(response);
         }
-
     }
     public JPanel getContent() {
         return filePanel;
