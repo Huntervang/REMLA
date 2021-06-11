@@ -64,6 +64,10 @@ public class Util {
         return Files.isDirectory(Paths.get(basePath + "/.git"));
     }
 
+    public static Boolean isWindows() {
+        return System.getProperty("os.name").startsWith("Windows");
+    }
+
     public static Project getProject() {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
         Project activeProject = null;

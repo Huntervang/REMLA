@@ -49,6 +49,25 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
     }
 
     private void checkDvcInstalled() {
+        if (Util.isWindows()) {
+            Util.runConsoleCommand("dvc version", Util.getProject().getBasePath(), new ProcessAdapter() {
+                @Override
+                public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                    super.onTextAvailable(event, outputType);
+                    if (event.getText().contains("DVC version")) {
+                        isDvcInstalled = true;
+                    }
+                }
+            });
+        } else { //Unix
+            Util.runConsoleCommand("which dvc", Util.getProject().getBasePath(), new ProcessAdapter() {
+                @Override
+                public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                    super.onTextAvailable(event, outputType);
+                    isDvcInstalled = true;
+                }
+            });
+        }
         Util.runConsoleCommand("which dvc", Util.getProject().getBasePath(), new ProcessAdapter() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
