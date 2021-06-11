@@ -28,8 +28,11 @@ public class DVCRemove {
 
             if (!Util.commandRanCorrectly(message)) {
                 // TODO: provide user feedback when add has not been succesful
+                System.err.println(message);
+                System.err.println("on file " + filePath);
             }
         }
+        dvcList.refresh();
     }
 
     /*
