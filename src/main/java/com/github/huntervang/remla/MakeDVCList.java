@@ -115,16 +115,6 @@ public class MakeDVCList {
         return checkedFiles;
     }
 
-    private Vector<String> getCheckedFiles() {
-        Vector<String> checkedFiles = new Vector<>();
-        for (int i = 0; i < checkBoxList.getModel().getSize(); i++) {
-            if (checkBoxList.getModel().getElementAt(i).isSelected()) {
-                checkedFiles.add(checkBoxList.getModel().getElementAt(i).getText());
-            }
-        }
-        return checkedFiles;
-    }
-
     private void setDVCFileList() {
         String dvcListCommand = "dvc list . -R --dvc-only --show-json"; //TODO handle folder path
         String response = Util.runConsoleCommand(dvcListCommand, project.getBasePath(), new ProcessAdapter() {

@@ -34,7 +34,7 @@ public class DVCRemove {
                 System.err.println("on file " + filePath);
             }
         }
-        dvcList.refresh();
+        //dvcList.refresh();
     }
 
     /*
