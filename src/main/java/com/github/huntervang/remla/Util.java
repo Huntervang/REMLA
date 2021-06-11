@@ -6,9 +6,11 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -104,5 +106,9 @@ public class Util {
             return null;
         }
         return null;
+    }
+
+    static void errorDialog(String title, String message){
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(Util.getProject(), message, title));
     }
 }
