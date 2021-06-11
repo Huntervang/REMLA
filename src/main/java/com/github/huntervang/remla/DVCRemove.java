@@ -8,23 +8,31 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.Objects;
+import java.util.Vector;
+
 import org.jetbrains.annotations.NotNull;
 
 public class DVCRemove {
-    public static void dvcRemove(VirtualFile file, Project project) {
-        String message = Util.runConsoleCommand("dvc remove " + file.getPath(), project.getBasePath(), new ProcessAdapter() {
-            @Override
-            public void processTerminated(@NotNull ProcessEvent event) {
-                super.processTerminated(event);
-                // TODO: update UI when new files are dvc added
-            }
-        });
+    public static void dvcRemove(Project project, MakeDVCList dvcList) {
+        Vector<String> checkedFiles = dvcList.getCheckedFiles();
+        for(String filePath : checkedFiles) {
+            System.out.println(filePath);
+            String message = Util.runConsoleCommand("dvc remove " + filePath, project.getBasePath(), new ProcessAdapter() {
+                @Override
+                public void processTerminated(@NotNull ProcessEvent event) {
+                    super.processTerminated(event);
+                    // TODO: update UI when new files are dvc added
+                    System.out.println(filePath + " removed");
+                }
+            });
 
-        if (!Util.commandRanCorrectly(message)) {
-            // TODO: provide user feedback when add has not been succesful
+            if (!Util.commandRanCorrectly(message)) {
+                // TODO: provide user feedback when add has not been succesful
+            }
         }
     }
 
+    /*
     public static void openDvcRemoveFilePicker(Project project) {
         FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false,
                 true, true, false, true);
@@ -37,4 +45,5 @@ public class DVCRemove {
             dvcRemove(file, project);
         }
     }
+    */
 }
