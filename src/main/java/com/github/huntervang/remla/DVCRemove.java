@@ -2,12 +2,7 @@ package com.github.huntervang.remla;
 
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import java.util.Objects;
 import java.util.Vector;
 
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +29,5 @@ public class DVCRemove {
                 System.err.println("on file " + filePath);
             }
         }
-        //dvcList.refresh();
     }
 }
