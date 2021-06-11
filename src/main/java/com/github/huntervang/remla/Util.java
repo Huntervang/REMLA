@@ -39,7 +39,9 @@ public class Util {
 
             ProcessHandler processHandler = new OSProcessHandler(generalCommandLine);
             processHandler.startNotify();
-            processHandler.addProcessListener(processAdapter);
+            if (processAdapter != null) {
+                processHandler.addProcessListener(processAdapter);
+            }
             return COMMAND_RAN_CORRECTLY;
 
         } catch (ExecutionException executionException) {
