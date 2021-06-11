@@ -4,12 +4,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.nio.charset.StandardCharsets;

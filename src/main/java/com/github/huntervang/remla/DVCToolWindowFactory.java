@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 public class DVCToolWindowFactory implements ToolWindowFactory {
 
-    public static HashMap<String, Content> contentHashMap = new HashMap<>();
+    public static Content dvcAddRemoteContent;
 
     private boolean isDvcInstalled;
     /**
@@ -33,11 +33,8 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
         Content noDVCInstalledContent = contentFactory.createContent(noDVCInstalledWindow.getContent(), "", false);
         Content noDVCProjectContent = contentFactory.createContent(noDVCProjectWindow.getContent(), "", false);
-        Content dvcAddRemoteContent = contentFactory.createContent(dvcAddRemoteWindow.getContent(), "", false);
+        dvcAddRemoteContent = contentFactory.createContent(dvcAddRemoteWindow.getContent(), "", false);
 
-        contentHashMap.put("no_installation", noDVCInstalledContent);
-        contentHashMap.put("no_project", noDVCProjectContent);
-        contentHashMap.put("dvc_add", dvcAddRemoteContent);
         toolWindow.getContentManager().addContent(noDVCInstalledContent);
         toolWindow.getContentManager().addContent(noDVCProjectContent);
         toolWindow.getContentManager().addContent(dvcAddRemoteContent);
@@ -62,5 +59,4 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
             }
         });
     }
-
 }
