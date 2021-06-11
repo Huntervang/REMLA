@@ -11,9 +11,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import java.awt.BorderLayout;
+
 import java.awt.Font;
 import java.awt.Insets;
 import javax.swing.border.Border;
@@ -37,13 +35,19 @@ public class DVCList {
     private CheckBoxList<CheckListItem> checkBoxList;
     private final Project project;
 
-    private final HashMap<String, Color> colorMap = new HashMap<String, Color>() {{
-        put("new" , JBColor.GREEN);
-        put("modified" , JBColor.BLUE);
-        put("deleted" , JBColor.GRAY);
-        put("not in cache" , JBColor.RED); }};
+    private final HashMap<String, Color> localColorMap = new HashMap<String, Color>() {{
+        put("new" , JBColor.GREEN);             //new: An output is found in the workspace, but there is no corresponding file hash saved in the dvc.lock or .dvc file yet.
+        put("modified" , JBColor.BLUE);         //modified: An output or dependency is found in the workspace, but the corresponding file hash in the dvc.lock or .dvc file is not up to date.
+        put("deleted" , JBColor.GRAY);          //deleted: The output or dependency is referenced in a dvc.lock or .dvc file, but does not exist in the workspace.
+        put("not in cache" , JBColor.RED); }};  //not in cache: An output exists in the workspace, and the corresponding file hash in the dvc.lock or .dvc file is up to date, but there is no corresponding cache file or directory.
+
+    private final HashMap<String, Color> remoteColorMap = new HashMap<String, Color>() {{
+        put("new" , JBColor.GREEN);         //new means that the file/directory exists in the cache but not in remote storage.
+        put("deleted" , JBColor.GRAY);      //deleted means that the file/directory doesn't exist in the cache, but exists in remote storage.
+        put("missing" , JBColor.RED); }};   //missing means that the file/directory doesn't exist neither in cache, nor in remote storage.
 
     private final HashMap<String, String> dvcStatus = new HashMap<>();
+    private final HashMap<String, String> dvcStatusRemote = new HashMap<>();
 
     public DVCList(Project thisProject){
         project = thisProject;
@@ -101,7 +105,10 @@ public class DVCList {
     }
 
     private void runDVCStatusAndList() {
-        setDVCStatus(this::setDVCFileList);
+        setDVCStatus(this::setDVCFileList, false);
+
+        //TODO setDVCStatus(true) to set for status wrt remote
+
     }
 
     private void setDVCFileList() {
@@ -148,7 +155,7 @@ public class DVCList {
                     Color fileColor;
                     if (dvcStatus.containsKey(fileName)) {
                         String fileStatus = dvcStatus.get(fileName);
-                        fileColor = colorMap.get(fileStatus);
+                        fileColor = localColorMap.get(fileStatus);
                     } else {
                         fileColor = JBColor.GREEN;
                     }
@@ -164,8 +171,13 @@ public class DVCList {
         }
     }
 
-    private void setDVCStatus(Runnable runnable) {
-        String dvcStatusCommand = "dvc status --show-json";
+    private void setDVCStatus(Runnable runnable, boolean remote) {
+        String dvcStatusCommand;
+        if(remote)
+            dvcStatusCommand = "dvc status --remote --show-json";
+        else
+            dvcStatusCommand = "dvc status --show-json";
+
         String response = Util.runConsoleCommand(dvcStatusCommand, project.getBasePath(), new ProcessAdapter() {
             JSONObject status;
             @Override
@@ -180,7 +192,10 @@ public class DVCList {
                             JSONObject statusjson = (JSONObject) statusEntries;
                             JSONObject outgoingEntry = (JSONObject) statusjson.get("changed outs");
                             for(String filename : outgoingEntry.keySet()){
-                                dvcStatus.put(filename, (String) outgoingEntry.get(filename));
+                                if(remote)
+                                    dvcStatusRemote.put(filename, (String) outgoingEntry.get(filename));
+                                else
+                                    dvcStatus.put(filename, (String) outgoingEntry.get(filename));
                             }
                         }//TODO incoming EntrySet?
                     }
@@ -200,6 +215,7 @@ public class DVCList {
             fileLabel.setText(response);
         }
     }
+
     public JPanel getContent() {
         return filePanel;
     }
