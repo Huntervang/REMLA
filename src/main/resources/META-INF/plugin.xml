@@ -14,6 +14,13 @@
         </group>
     </actions>
 
+    <actions>
+        <group id="REMLA.DVCPopUp" text="DVC" description="DVC plugin" popup="true">
+            <add-to-group group-id="VersionControlsGroup"/>
+            <action class="com.github.huntervang.remla.DVCAddAction" id="REMLA.Actions.DVCAddAction" text="Add"/>
+        </group>
+    </actions>
+
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="DVC" secondary="false" icon="/icons/DVC_toolwindow.png" anchor="bottom"
                     factoryClass="com.github.huntervang.remla.DVCToolWindowFactory"/>
