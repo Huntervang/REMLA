@@ -8,6 +8,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 
 import java.awt.*;
 import java.nio.charset.StandardCharsets;
@@ -44,7 +46,7 @@ public class Util {
      * @param basePath project basepath
      * @return true if .dvc dir exists
      */
-    public static boolean isDvcInstalled(String basePath) {
+    public static boolean isDvcInProject(String basePath) {
         //Check for .dvc file in the project
         return Files.isDirectory(Paths.get(basePath + "/.dvc"));
     }

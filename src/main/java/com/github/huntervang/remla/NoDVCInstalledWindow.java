@@ -1,7 +1,5 @@
 package com.github.huntervang.remla;
 
-import com.intellij.openapi.wm.ToolWindow;
-
 import javax.swing.*;
 
 public class NoDVCInstalledWindow {
@@ -15,4 +13,5 @@ public class NoDVCInstalledWindow {
 	public JPanel getContent() {
 		return noDVCInstalledWindow;
 	}
+
 }

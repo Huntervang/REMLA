@@ -189,6 +189,10 @@ public class DVCAddRemote {
         return dvcAddRemoteContent;
     }
 
+    public Content getToolWindowContent() {
+        return ContentFactory.SERVICE.getInstance().createContent(dvcAddRemoteContent, "", false);
+    }
+
     public void dvcAddRemote() {
         String response = runConsoleCommand("dvc remote add myremote " + remoteInput.getText(), new ProcessAdapter() {
             @Override

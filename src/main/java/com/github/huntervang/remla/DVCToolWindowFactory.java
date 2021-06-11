@@ -10,7 +10,11 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+
 public class DVCToolWindowFactory implements ToolWindowFactory {
+
+    public static HashMap<String, Content> contentHashMap = new HashMap<>();
 
     private boolean isDvcInstalled;
     /**
@@ -21,30 +25,36 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
      */
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         checkDvcInstalled();
-        DVCAddRemote dvcAddRemote = new DVCAddRemote(toolWindow);
-        NoDVCProjectWindow noDVCProjectWindow = new NoDVCProjectWindow();
+        DVCAddRemote dvcAddRemoteWindow = new DVCAddRemote(toolWindow);
+        NoDVCProjectWindow noDVCProjectWindow = new NoDVCProjectWindow(toolWindow);
         NoDVCInstalledWindow noDVCInstalledWindow = new NoDVCInstalledWindow();
 
 
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-        Content content;
-        System.out.println(project.getBasePath());
-        System.out.println(Util.isDvcInstalled(project.getBasePath()));
+        Content noDVCInstalledContent = contentFactory.createContent(noDVCInstalledWindow.getContent(), "", false);
+        Content noDVCProjectContent = contentFactory.createContent(noDVCProjectWindow.getContent(), "", false);
+        Content dvcAddRemoteContent = contentFactory.createContent(dvcAddRemoteWindow.getContent(), "", false);
+
+        contentHashMap.put("no_installation", noDVCInstalledContent);
+        contentHashMap.put("no_project", noDVCProjectContent);
+        contentHashMap.put("dvc_add", dvcAddRemoteContent);
+        toolWindow.getContentManager().addContent(noDVCInstalledContent);
+        toolWindow.getContentManager().addContent(noDVCProjectContent);
+        toolWindow.getContentManager().addContent(dvcAddRemoteContent);
+
         if (!isDvcInstalled) {
-            content = contentFactory.createContent(noDVCInstalledWindow.getContent(), "", false);
+            toolWindow.getContentManager().setSelectedContent(noDVCInstalledContent, true);
         } else {
-            if (!Util.isDvcInstalled(project.getBasePath())) {
-                content = contentFactory.createContent(noDVCProjectWindow.getContent(), "", false);
+            if (!Util.isDvcInProject(project.getBasePath())) {
+                toolWindow.getContentManager().setSelectedContent(noDVCProjectContent, true);
             } else {
-                content = contentFactory.createContent(dvcAddRemote.getContent(), "", false);
+                toolWindow.getContentManager().setSelectedContent(dvcAddRemoteContent, true);
             }
         }
-
-        toolWindow.getContentManager().addContent(content);
     }
 
     private void checkDvcInstalled() {
-        String message = Util.runConsoleCommand("which dvc", Util.getProject().getBasePath(), new ProcessAdapter() {
+        Util.runConsoleCommand("which dvc", Util.getProject().getBasePath(), new ProcessAdapter() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 super.onTextAvailable(event, outputType);
