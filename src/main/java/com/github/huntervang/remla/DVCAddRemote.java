@@ -39,7 +39,7 @@ public class DVCAddRemote {
     }
 
     private void updateOpenStorageButton() {
-        String storageLocation = getExistingRemote();
+        String storageLocation = Util.getExistingRemote();
         removeActionListeners(addStorageButton);
         removeActionListeners(openCurrentStorageButton);
         if (storageLocation != null) {
@@ -65,25 +65,6 @@ public class DVCAddRemote {
         for (ActionListener actionListener : button.getActionListeners()) {
             button.removeActionListener(actionListener);
         }
-    }
-
-    private String getExistingRemote() {
-        try {
-            VirtualFile file = LocalFileSystem.getInstance().findFileByPath(project.getBasePath() + "/.dvc/config");
-            if (file != null) {
-                file.refresh(false, true);
-                CharSequence fileContent = LoadTextUtil.loadText(file);
-                String[] lines = fileContent.toString().split("\n");
-                for (int i = 0; i < lines.length; i++) {
-                    if (lines[i].contains("['remote ")) {
-                        return lines[i + 1].split("url = ")[1];
-                    }
-                }
-            }
-        } catch (NullPointerException e) {
-            return null;
-        }
-        return null;
     }
 
     public JPanel getContent() {

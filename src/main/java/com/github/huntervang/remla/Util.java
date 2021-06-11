@@ -6,9 +6,12 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,5 +85,24 @@ public class Util {
 
     public static boolean commandRanCorrectly(String message) {
         return message.equals(COMMAND_RAN_CORRECTLY);
+    }
+
+    public static String getExistingRemote() {
+        try {
+            VirtualFile file = LocalFileSystem.getInstance().findFileByPath(getProject().getBasePath() + "/.dvc/config");
+            if (file != null) {
+                file.refresh(false, true);
+                CharSequence fileContent = LoadTextUtil.loadText(file);
+                String[] lines = fileContent.toString().split("\n");
+                for (int i = 0; i < lines.length; i++) {
+                    if (lines[i].contains("['remote ")) {
+                        return lines[i + 1].split("url = ")[1];
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
     }
 }

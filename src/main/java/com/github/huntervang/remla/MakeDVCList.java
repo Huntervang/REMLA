@@ -2,7 +2,9 @@ package com.github.huntervang.remla;
 
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -65,30 +67,36 @@ public class MakeDVCList {
     }
 
     private void push() {
-        for(int i=0; i<checkBoxList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
-            CheckListItem item = checkBoxList.getItemAt(i);
-            if(checkBoxList.isItemSelected(i) && item != null){ //check if file is checked
-                String filename = item.toString();
-                String dvcListCommand = "dvc push " + filename;
-                String response = Util.runConsoleCommand(dvcListCommand,".", new ProcessAdapter() {
-                    @Override
-                    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                        super.onTextAvailable(event, outputType);
-                        try {
-                            System.out.println(event.getText());
-                            //TODO parse command response
+        if (Util.getExistingRemote() != null) {
+            for (int i = 0; i < checkBoxList.getModel().getSize(); i++) { //iterate through file list, push when checked
+                CheckListItem item = checkBoxList.getItemAt(i);
+                if (checkBoxList.isItemSelected(i) && item != null) { //check if file is checked
+                    String filename = item.toString();
+                    String dvcListCommand = "dvc push " + filename;
+                    String response = Util.runConsoleCommand(dvcListCommand, ".", new ProcessAdapter() {
+                        @Override
+                        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                            super.onTextAvailable(event, outputType);
+                            try {
+                                System.out.println(event.getText());
+                                //TODO parse command response
+                            } catch (org.json.JSONException e) {
+                                //TODO on command failure
+                            }
                         }
-                        catch(org.json.JSONException e){
-                            //TODO on command failure
-                        }
-                    }
-                });
+                    });
 
-                //TODO based on response: provide feedback
-                if(Util.commandRanCorrectly(response)){
-                    System.out.println("command executed properly i guess");
+                    //TODO based on response: provide feedback
+                    if (Util.commandRanCorrectly(response)) {
+                        System.out.println("command executed properly i guess");
+                    }
                 }
             }
+        } else {
+            ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(project,
+                    "You have not selected a storage location yet, please choose one using the menu on the right",
+                    "No Storage Location Selected"
+            ));
         }
     }
 
