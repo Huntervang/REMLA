@@ -58,7 +58,7 @@ public class MakeDVCList {
 
     private void push() {
         for(int i=0; i<fileList.getModel().getSize(); i++ ){ //iterate through file list, push when checked
-            CheckListItem item = (CheckListItem) fileList.getModel().getElementAt(i);
+            CheckListItem item = fileList.getModel().getElementAt(i);
             if(item.isSelected()){ //check if file is checked
                 String filename = item.toString();
                 String dvcListCommand = "dvc push " + filename;
@@ -97,6 +97,16 @@ public class MakeDVCList {
         }
     }
 
+    public Vector<String> getCheckedFiles() {
+        Vector<String> checkedFiles = new Vector<>();
+        for (int i = 0; i < fileList.getModel().getSize(); i++) {
+            if (fileList.getModel().getElementAt(i).isSelected()) {
+                checkedFiles.add(fileList.getModel().getElementAt(i).toString());
+            }
+        }
+        return checkedFiles;
+    }
+
     private void setDVCFileList() {
         String dvcListCommand = "dvc list . -R --dvc-only --show-json"; //TODO handle folder path
         String response = Util.runConsoleCommand(dvcListCommand, project.getBasePath(), new ProcessAdapter() {
@@ -116,12 +126,7 @@ public class MakeDVCList {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-                Vector<String> checkedFiles = new Vector<>();
-                for(int i=0; i<fileList.getModel().getSize(); i++){
-                    if(fileList.getModel().getElementAt(i).isSelected()){
-                        checkedFiles.add(fileList.getModel().getElementAt(i).toString());
-                    }
-                }
+                //Vector<String> checkedFiles = getCheckedFiles();
                 CheckListItem[] files = new CheckListItem[status.length()];
 
                 if(status.length() == 0){ //emtpy file list
@@ -144,7 +149,7 @@ public class MakeDVCList {
                             fileColor = JBColor.GREEN;
                         }
                         files[i] = new CheckListItem(fileName, fileColor);
-                        if(checkedFiles.contains(fileName)){
+                        if(getCheckedFiles().contains(fileName)){
                             files[i].setSelected(true);
                         }
 
