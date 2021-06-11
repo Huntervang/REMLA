@@ -17,7 +17,9 @@ public class DVCRemove {
         Vector<String> checkedFiles = dvcList.getCheckedFiles();
         for(String filePath : checkedFiles) {
             System.out.println(filePath);
-            String message = Util.runConsoleCommand("dvc remove " + filePath, project.getBasePath(), new ProcessAdapter() {
+            String dotDVCFilePath =  filePath + ".dvc";
+            //TODO if exists?
+            String message = Util.runConsoleCommand("dvc remove " + dotDVCFilePath, project.getBasePath(), new ProcessAdapter() {
                 @Override
                 public void processTerminated(@NotNull ProcessEvent event) {
                     super.processTerminated(event);
