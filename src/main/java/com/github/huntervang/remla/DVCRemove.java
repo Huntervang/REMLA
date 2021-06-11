@@ -16,7 +16,6 @@ public class DVCRemove {
     public static void dvcRemove(Project project, MakeDVCList dvcList) {
         Vector<String> checkedFiles = dvcList.getCheckedFiles();
         for(String filePath : checkedFiles) {
-            System.out.println(filePath);
             String dotDVCFilePath =  filePath + ".dvc";
             //TODO if exists?
             String message = Util.runConsoleCommand("dvc remove " + dotDVCFilePath, project.getBasePath(), new ProcessAdapter() {
@@ -24,7 +23,6 @@ public class DVCRemove {
                 public void processTerminated(@NotNull ProcessEvent event) {
                     super.processTerminated(event);
                     // TODO: update UI when new files are dvc added
-                    System.out.println(filePath + " removed");
                 }
             });
 
@@ -34,7 +32,6 @@ public class DVCRemove {
                 System.err.println("on file " + filePath);
             }
         }
-        dvcList.refresh();
     }
 
     /*

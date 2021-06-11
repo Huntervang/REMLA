@@ -109,7 +109,7 @@ public class MakeDVCList {
         for(int i=0; i< checkBoxList.getModel().getSize(); i++){
             JCheckBox checkBox = checkBoxList.getModel().getElementAt(i);
             if (checkBox.isSelected()) {
-                checkedFiles.add(checkBox.toString());
+                checkedFiles.add(checkBox.getText());
             }
         }
         return checkedFiles;
