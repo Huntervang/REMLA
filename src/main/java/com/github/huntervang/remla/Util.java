@@ -52,6 +52,16 @@ public class Util {
         return Files.isDirectory(Paths.get(basePath + "/.dvc"));
     }
 
+    /**
+     *
+     * @param basePath project basepath
+     * @return true if .git dir exists
+     */
+    public static boolean isGitInProject(String basePath) {
+        //Check for .git file in the project
+        return Files.isDirectory(Paths.get(basePath + "/.git"));
+    }
+
     public static Project getProject() {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
         Project activeProject = null;
