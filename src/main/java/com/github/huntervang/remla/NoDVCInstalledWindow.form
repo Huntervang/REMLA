@@ -8,11 +8,9 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="23ec0" class="javax.swing.JTextArea" binding="textArea1">
+      <component id="9617" class="javax.swing.JLabel">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="150" height="50"/>
-          </grid>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="No DVC is installed on your system, please checkout https://dvc.org/doc/install to install DVC"/>

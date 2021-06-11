@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.github.huntervang.remla.DVCToolWindowFactory.dvcAddRemoteContent;
+import static com.github.huntervang.remla.DVCToolWindowFactory.dvcToolWindowContent;
 
 public class NoDVCProjectWindow {
 	private JPanel noDVCProjectWindow;
@@ -34,7 +34,7 @@ public class NoDVCProjectWindow {
 					return;
 				}
 				super.processTerminated(event);
-				ApplicationManager.getApplication().invokeLater(() -> toolWindow.getContentManager().setSelectedContent(dvcAddRemoteContent));
+				ApplicationManager.getApplication().invokeLater(() -> toolWindow.getContentManager().setSelectedContent(dvcToolWindowContent));
 			}
 		});
 
