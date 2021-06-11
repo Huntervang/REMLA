@@ -19,7 +19,6 @@ public class DVCToolWindow {
         project = newproject;
         toolWindow =newtoolWindow;
         addButton.addActionListener(e -> openDvcAddFilePicker(project));
-
     }
 
     public JPanel getContent() {
@@ -28,6 +27,6 @@ public class DVCToolWindow {
 
     private void createUIComponents() {
         addRemote = (new DVCAddRemote(toolWindow)).getContent();
-        filePanel = (new MakeDVCList(project)).getContent();
+        filePanel = (new DVCList(project)).getContent();
     }
 }

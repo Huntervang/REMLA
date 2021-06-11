@@ -30,7 +30,7 @@ import java.util.Vector;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
-public class MakeDVCList {
+public class DVCList {
     private JPanel filePanel;
     private JLabel fileLabel;
     private JButton pushButton;
@@ -45,7 +45,7 @@ public class MakeDVCList {
 
     private final HashMap<String, String> dvcStatus = new HashMap<>();
 
-    public MakeDVCList(Project thisProject){
+    public DVCList(Project thisProject){
         project = thisProject;
         runDVCStatusAndList(); //TODO set filelist is called in first render,
                                // should be applied on some trigger, but don't know which trigger
