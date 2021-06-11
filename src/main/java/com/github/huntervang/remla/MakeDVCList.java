@@ -126,7 +126,7 @@ public class MakeDVCList {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-                //Vector<String> checkedFiles = getCheckedFiles();
+                Vector<String> checkedFiles = getCheckedFiles();
                 CheckListItem[] files = new CheckListItem[status.length()];
 
                 if(status.length() == 0){ //emtpy file list
@@ -149,7 +149,7 @@ public class MakeDVCList {
                             fileColor = JBColor.GREEN;
                         }
                         files[i] = new CheckListItem(fileName, fileColor);
-                        if(getCheckedFiles().contains(fileName)){
+                        if(checkedFiles.contains(fileName)){
                             files[i].setSelected(true);
                         }
 
