@@ -36,19 +36,4 @@ public class DVCRemove {
         }
         //dvcList.refresh();
     }
-
-    /*
-    public static void openDvcRemoveFilePicker(Project project) {
-        FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false,
-                true, true, false, true);
-        fileChooserDescriptor.setRoots(ProjectRootManager.getInstance(project).getContentRootsFromAllModules());
-        fileChooserDescriptor.setTitle("Choose Files/Folders to Remove from Dvc");
-        fileChooserDescriptor.withFileFilter(virtualFile -> virtualFile.getPath().endsWith( ".dvc"));
-
-        VirtualFile[] files = FileChooser.chooseFiles(fileChooserDescriptor, project, null);
-        for (VirtualFile file : files) {
-            dvcRemove(file, project);
-        }
-    }
-    */
 }
