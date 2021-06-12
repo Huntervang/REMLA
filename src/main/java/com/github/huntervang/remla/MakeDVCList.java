@@ -87,8 +87,8 @@ public class MakeDVCList {
             public void actionPerformed(ActionEvent e) {
                 try {
                     processHandler.getProcessInput().write((inputField.getText()).getBytes());
-                    processHandler.getProcessInput().flush();
-//                    builder.getDialogWrapper().close(0);
+                    processHandler.getProcessInput().close();
+                    builder.getDialogWrapper().close(0);
 
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
