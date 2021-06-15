@@ -15,17 +15,21 @@ import java.util.Map;
 
 public class DVCDag {
     private JPanel rootPanel;
+    private JPanel dagPanel;
+    private JButton runPipelineButton;
     private final Project project;
     private final Pipeline pipeline;
 
     public DVCDag(Project project) {
         this.project = project;
         this.pipeline = parseYaml();
-        drawDag();
+        if (this.pipeline != null) {
+            drawDag();
+        }
     }
 
     private void drawDag() {
-        rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.X_AXIS));
+        dagPanel.setLayout(new FlowLayout());
         BuildStage current = null;
         for (BuildStage stage : pipeline.getStages()) {
             if (stage.getDeps().size() == 1) {
@@ -33,13 +37,13 @@ public class DVCDag {
                 break;
             }
         }
-        rootPanel.add(new JButton(current.getName()));
+        dagPanel.add(new JButton(current.getName()));
         while (true) {
             boolean hasNext = false;
             for (BuildStage next : pipeline.getStages()) {
                 if (!current.equals(next) && intersects(current.getOuts(), next.getDeps())) {
-                    rootPanel.add(new JLabel("-->"));
-                    rootPanel.add(new JButton(next.getName()));
+                    dagPanel.add(new JLabel("-->"));
+                    dagPanel.add(new JButton(next.getName()));
                     current = next;
                     hasNext = true;
                     break;
@@ -49,7 +53,7 @@ public class DVCDag {
                 break;
             }
         }
-        rootPanel.updateUI();
+        dagPanel.updateUI();
     }
 
     private boolean intersects(List<String> outs, List<String> deps) {
