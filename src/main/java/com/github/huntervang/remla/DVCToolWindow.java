@@ -27,7 +27,7 @@ public class DVCToolWindow {
     }
 
     private void createUIComponents() {
-        addRemote = (new DVCAddRemote(toolWindow)).getContent();
+        addRemote = (new DVCAddRemote(toolWindow, project)).getContent();
         filePanel = (new MakeDVCList(project)).getContent();
     }
 }

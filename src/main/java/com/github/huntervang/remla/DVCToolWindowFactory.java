@@ -26,16 +26,19 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
         DVCToolWindow dvcToolWindow = new DVCToolWindow(project, toolWindow);
         NoDVCProjectWindow noDVCProjectWindow = new NoDVCProjectWindow(toolWindow);
         NoDVCInstalledWindow noDVCInstalledWindow = new NoDVCInstalledWindow();
+        DVCDag dvcDag = new DVCDag(project);
 
 
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
         Content noDVCInstalledContent = contentFactory.createContent(noDVCInstalledWindow.getContent(), "", false);
         Content noDVCProjectContent = contentFactory.createContent(noDVCProjectWindow.getContent(), "", false);
         dvcToolWindowContent = contentFactory.createContent(dvcToolWindow.getContent(), "", false);
+        Content dvcDagContent = contentFactory.createContent(dvcDag.getContent(), "dvc dag", false);
 
         toolWindow.getContentManager().addContent(noDVCInstalledContent);
         toolWindow.getContentManager().addContent(noDVCProjectContent);
         toolWindow.getContentManager().addContent(dvcToolWindowContent);
+        toolWindow.getContentManager().addContent(dvcDagContent);
 
         if (!isDvcInstalled) {
             toolWindow.getContentManager().setSelectedContent(noDVCInstalledContent, true);
