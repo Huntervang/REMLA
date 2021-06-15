@@ -14,7 +14,14 @@
         </constraints>
         <properties/>
         <border type="none"/>
-        <children/>
+        <children>
+          <component id="13670" class="javax.swing.JList" binding="stageList">
+            <constraints/>
+            <properties>
+              <model/>
+            </properties>
+          </component>
+        </children>
       </scrollpane>
       <component id="26bb5" class="javax.swing.JButton" binding="repro">
         <constraints>
