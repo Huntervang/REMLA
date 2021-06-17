@@ -1,9 +1,15 @@
 package com.github.huntervang.remla;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -13,19 +19,22 @@ import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.Component;
 import java.awt.Color;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
+import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -38,17 +47,18 @@ public class MakeDVCList {
     private final Project project;
 
     private final HashMap<String, Color> colorMap = new HashMap<String, Color>() {{
-        put("new" , JBColor.GREEN);
-        put("modified" , JBColor.BLUE);
-        put("deleted" , JBColor.GRAY);
-        put("not in cache" , JBColor.RED); }};
+        put("new", JBColor.GREEN);
+        put("modified", JBColor.BLUE);
+        put("deleted", JBColor.GRAY);
+        put("not in cache", JBColor.RED);
+    }};
 
     private final HashMap<String, String> dvcStatus = new HashMap<>();
 
-    public MakeDVCList(Project thisProject){
+    public MakeDVCList(Project thisProject) {
         project = thisProject;
         runDVCStatusAndList(); //TODO set filelist is called in first render,
-                               // should be applied on some trigger, but don't know which trigger
+        // should be applied on some trigger, but don't know which trigger
         pushButton.addActionListener(e -> push());
 
         checkBoxList.setCellRenderer(new ColoredListRenderer());
@@ -62,29 +72,71 @@ public class MakeDVCList {
         });
     }
 
-    private void refresh(){
+    private void refresh() {
         runDVCStatusAndList();
     }
 
+    private void showGoogleDriveDialog(String url, OSProcessHandler processHandler) {
+        DialogBuilder builder = new DialogBuilder(project);
+        builder.setTitle("Enter Authentication Code");
+        builder.removeAllActions();
+        JTextField inputField = new JTextField();
+        builder.setCenterPanel(inputField);
+        builder.addAction(new AbstractAction("Submit code") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    processHandler.getProcessInput().write((inputField.getText()).getBytes());
+                    processHandler.getProcessInput().close();
+                    builder.getDialogWrapper().close(0);
+
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
+        });
+        builder.addAction(new AbstractAction("Get authentication code") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                BrowserUtil.browse(url);
+            }
+        });
+        builder.show();
+    }
+
     private void push() {
-        if (Util.getExistingRemote() != null) {
+        String remote = Util.getExistingRemote();
+        if (remote != null) {
             for (int i = 0; i < checkBoxList.getModel().getSize(); i++) { //iterate through file list, push when checked
                 CheckListItem item = checkBoxList.getItemAt(i);
                 if (checkBoxList.isItemSelected(i) && item != null) { //check if file is checked
                     String filename = item.toString();
                     String dvcListCommand = "dvc push " + filename;
-                    String response = Util.runConsoleCommand(dvcListCommand, ".", new ProcessAdapter() {
-                        @Override
-                        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                            super.onTextAvailable(event, outputType);
-                            try {
-                                System.out.println(event.getText());
-                                //TODO parse command response
-                            } catch (org.json.JSONException e) {
-                                //TODO on command failure
+                    ArrayList<String> cmds = new ArrayList<>(Arrays.asList(dvcListCommand.split(" ")));
+                    GeneralCommandLine generalCommandLine = new GeneralCommandLine(cmds);
+                    generalCommandLine.setCharset(StandardCharsets.UTF_8);
+                    generalCommandLine.setWorkDirectory(project.getBasePath());
+                    String response = null;
+                    try {
+                        OSProcessHandler processHandler = new OSProcessHandler(generalCommandLine);
+                        response = Util.runConsoleCommand(processHandler, new ProcessAdapter() {
+                            @Override
+                            public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                                super.onTextAvailable(event, outputType);
+                                try {
+                                    if (remote.contains("gdrive") && event.getText().contains("https://")) {
+                                        ApplicationManager.getApplication().invokeLater(() -> showGoogleDriveDialog(event.getText(), processHandler));
+                                    }
+                                    System.out.println(event.getText());
+                                    //TODO parse command response
+                                } catch (org.json.JSONException e) {
+                                    //TODO on command failure
+                                }
                             }
-                        }
-                    });
+                        });
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
 
                     //TODO based on response: provide feedback
                     if (Util.commandRanCorrectly(response)) {
@@ -104,18 +156,29 @@ public class MakeDVCList {
         setDVCStatus(this::setDVCFileList);
     }
 
+    public Vector<String> getCheckedFiles() {
+        Vector<String> checkedFiles = new Vector<>();
+        for(int i=0; i< checkBoxList.getModel().getSize(); i++){
+            JCheckBox checkBox = checkBoxList.getModel().getElementAt(i);
+            if (checkBox.isSelected()) {
+                checkedFiles.add(checkBox.getText());
+            }
+        }
+        return checkedFiles;
+    }
+
     private void setDVCFileList() {
         String dvcListCommand = "dvc list . -R --dvc-only --show-json"; //TODO handle folder path
         String response = Util.runConsoleCommand(dvcListCommand, project.getBasePath(), new ProcessAdapter() {
             JSONArray status;
+
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 super.onTextAvailable(event, outputType);
                 try {
                     String commandOutput = event.getText();
                     status = new JSONArray(commandOutput);
-                }
-                catch(org.json.JSONException e){
+                } catch (org.json.JSONException e) {
                     status = new JSONArray();
                 }
             }
@@ -123,18 +186,11 @@ public class MakeDVCList {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-
                 checkBoxList.clear();
 
-                Vector<String> checkedFiles = new Vector<>();
-                for(int i=0; i< checkBoxList.getModel().getSize(); i++){
-                    JCheckBox checkBox = checkBoxList.getModel().getElementAt(i);
-                    if (checkBox.isSelected()) {
-                        checkedFiles.add(checkBox.toString());
-                    }
-                }
-
-                if (status.length() == 0){ //emtpy file list
+                Vector<String> checkedFiles = getCheckedFiles();
+              
+                if (status.length() == 0) { //emtpy file list
                     fileLabel.setText("There are no files tracked yet");
                     return;
                 }
@@ -159,7 +215,7 @@ public class MakeDVCList {
             }
         });
 
-        if(!Util.commandRanCorrectly(response)){
+        if (!Util.commandRanCorrectly(response)) {
             fileLabel.setText(response);
         }
     }
@@ -168,38 +224,40 @@ public class MakeDVCList {
         String dvcStatusCommand = "dvc status --show-json";
         String response = Util.runConsoleCommand(dvcStatusCommand, project.getBasePath(), new ProcessAdapter() {
             JSONObject status;
+
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 super.onTextAvailable(event, outputType);
                 try {
                     String commandOutput = event.getText();
                     status = new JSONObject(commandOutput);
-                    for(String dvcFile : status.keySet()) { //traverse json format output of dvc status (entry per *.dvc file)
+                    for (String dvcFile : status.keySet()) { //traverse json format output of dvc status (entry per *.dvc file)
                         JSONArray DVCFileStatus = (JSONArray) status.get(dvcFile);
-                        for(Object statusEntries : DVCFileStatus) {
+                        for (Object statusEntries : DVCFileStatus) {
                             JSONObject statusjson = (JSONObject) statusEntries;
                             JSONObject outgoingEntry = (JSONObject) statusjson.get("changed outs");
-                            for(String filename : outgoingEntry.keySet()){
+                            for (String filename : outgoingEntry.keySet()) {
                                 dvcStatus.put(filename, (String) outgoingEntry.get(filename));
                             }
                         }//TODO incoming EntrySet?
                     }
                     System.out.println(dvcStatus.keySet());
-                }
-                catch(org.json.JSONException e){
+                } catch (org.json.JSONException e) {
                     status = new JSONObject();
                 }
             }
+
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
                 runnable.run();
             }
         });
-        if(!Util.commandRanCorrectly(response)){
+        if (!Util.commandRanCorrectly(response)) {
             fileLabel.setText(response);
         }
     }
+
     public JPanel getContent() {
         return filePanel;
     }
