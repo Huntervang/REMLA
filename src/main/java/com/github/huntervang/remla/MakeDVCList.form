@@ -17,7 +17,9 @@
         <children>
           <component id="aedc3" class="com.intellij.ui.CheckBoxList" binding="checkBoxList">
             <constraints/>
-            <properties/>
+            <properties>
+              <selectionBackground color="-13157314"/>
+            </properties>
           </component>
         </children>
       </scrollpane>
