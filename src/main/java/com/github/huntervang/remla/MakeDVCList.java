@@ -87,8 +87,8 @@ public class MakeDVCList {
             public void actionPerformed(ActionEvent e) {
                 try {
                     processHandler.getProcessInput().write((inputField.getText()).getBytes());
-                    processHandler.getProcessInput().flush();
-//                    builder.getDialogWrapper().close(0);
+                    processHandler.getProcessInput().close();
+                    builder.getDialogWrapper().close(0);
 
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
@@ -156,6 +156,17 @@ public class MakeDVCList {
         setDVCStatus(this::setDVCFileList);
     }
 
+    public Vector<String> getCheckedFiles() {
+        Vector<String> checkedFiles = new Vector<>();
+        for(int i=0; i< checkBoxList.getModel().getSize(); i++){
+            JCheckBox checkBox = checkBoxList.getModel().getElementAt(i);
+            if (checkBox.isSelected()) {
+                checkedFiles.add(checkBox.getText());
+            }
+        }
+        return checkedFiles;
+    }
+
     private void setDVCFileList() {
         String dvcListCommand = "dvc list . -R --dvc-only --show-json"; //TODO handle folder path
         String response = Util.runConsoleCommand(dvcListCommand, project.getBasePath(), new ProcessAdapter() {
@@ -175,17 +186,10 @@ public class MakeDVCList {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
                 super.processTerminated(event);
-
                 checkBoxList.clear();
 
-                Vector<String> checkedFiles = new Vector<>();
-                for (int i = 0; i < checkBoxList.getModel().getSize(); i++) {
-                    JCheckBox checkBox = checkBoxList.getModel().getElementAt(i);
-                    if (checkBox.isSelected()) {
-                        checkedFiles.add(checkBox.toString());
-                    }
-                }
-
+                Vector<String> checkedFiles = getCheckedFiles();
+              
                 if (status.length() == 0) { //emtpy file list
                     fileLabel.setText("There are no files tracked yet");
                     return;
