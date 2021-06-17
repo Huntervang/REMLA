@@ -9,7 +9,7 @@ public class DrawableJPanel extends JPanel {
 
     private List<BuildStage> buildStages = new ArrayList<>();
 
-    public void setBuildStaes(List<BuildStage> stages) {
+    public void setBuildStages(List<BuildStage> stages) {
         buildStages = stages;
     }
 
