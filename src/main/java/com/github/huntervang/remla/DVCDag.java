@@ -5,9 +5,15 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
+import net.miginfocom.layout.Grid;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,10 +21,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DVCDag {
     private JPanel rootPanel;
     private JPanel dagPanel;
+    private DrawableJPanel dagPanel;
+    private JButton runPipelineButton;
     private final Project project;
     private final Pipeline pipeline;
 
@@ -44,14 +54,45 @@ public class DVCDag {
     }
 
     private void drawDag() {
-        dagPanel.setLayout(new FlowLayout());
-        BuildStage current = null;
+        dagPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 80, 20));
+
+        List<BuildStage> rootNodes = new ArrayList<>();
+        dagPanel.setBuildStaes(pipeline.getStages());
         for (BuildStage stage : pipeline.getStages()) {
-            if (stage.getDeps().size() == 1) {
-                current = stage;
-                break;
+            if (stage.getDeps().size() <= 1) {
+                rootNodes.add(stage);
             }
         }
+        for (BuildStage stage : pipeline.getStages()) {
+            for (BuildStage stage_ : pipeline.getStages()) {
+                if (!stage.equals(stage_) && intersects(stage.getOuts(), stage_.getDeps())) {
+                    stage.addChild(stage_);
+                }
+            }
+        }
+
+        for (BuildStage stage : rootNodes) {
+            JButton rootBtn = addJButton(stage.getName());
+            JPanel rootPanel = new JPanel();
+            rootPanel.add(rootBtn);
+            dagPanel.add(rootPanel);
+            List<BuildStage> queue = new ArrayList<>();
+            queue.add(stage);
+            queue.add(null);
+            JPanel depthPanel = new JPanel();
+            depthPanel.setLayout(new GridLayout(0, 1, 0, 80));
+            List<String> visited = new ArrayList<>();
+            while (!queue.isEmpty()) {
+                BuildStage current = queue.remove(0);
+                if (current == null) {
+                    dagPanel.add(depthPanel);
+                    depthPanel = new JPanel();
+                    depthPanel.setLayout(new GridLayout(0, 1, 0, 80));
+                    if (queue.isEmpty()) {
+                        break;
+                    }
+                    queue.add(null);
+                    continue;
         final String pipelineStage = current.getName();
         JButton newButton = new JButton(pipelineStage);
         newButton.addActionListener(e -> updateStage(pipelineStage));
@@ -69,12 +110,29 @@ public class DVCDag {
                     hasNext = true;
                     break;
                 }
-            }
-            if (!hasNext) {
-                break;
+                for (BuildStage child : current.getChildren()) {
+                    if (!visited.contains(child.getName())){
+                        queue.add(child);
+                        JButton button = addJButton(child.getName());
+                        depthPanel.add(button);
+                        visited.add(child.getName());
+                    }
+                }
             }
         }
         dagPanel.updateUI();
+        dagPanel.validate();
+    }
+
+    private JButton addJButton(String name) {
+        JButton button = new JButton(name);
+        button.setForeground(JBColor.BLACK);
+        button.setBackground(JBColor.GRAY);
+        Border line = new LineBorder(JBColor.BLACK);
+        Border margin = JBUI.Borders.empty(25, 15);
+        Border compound = new CompoundBorder(line, margin);
+        button.setBorder(compound);
+        return button;
     }
 
     private boolean intersects(List<String> outs, List<String> deps) {
@@ -85,8 +143,6 @@ public class DVCDag {
                 }
             }
         }
-        System.out.println(outs);
-        System.out.println(deps);
         return false;
     }
 
@@ -104,9 +160,8 @@ public class DVCDag {
             for (String stage : temp) {
                 String stageName = stage.split("=")[0].substring(1);
                 String cmd = stage.split("cmd=")[1].split(",")[0];
-                List<String> deps = Arrays.asList(stage.split("deps=\\[")[1].split("]")[0].split(","));
-                List<String> outs = Arrays.asList(stage.split("outs=\\[")[1].split("]")[0].split(","));
-                System.out.println(stageName);
+                List<String> deps = Arrays.stream(stage.split("deps=\\[")[1].split("]")[0].split(",")).map(String::trim).collect(Collectors.toList());
+                List<String> outs = Arrays.stream(stage.split("outs=\\[")[1].split("]")[0].split(",")).map(String::trim).collect(Collectors.toList());
                 pipeline.addStage(new BuildStage(stageName, cmd, deps, outs));
             }
             return pipeline;
@@ -115,6 +170,10 @@ public class DVCDag {
             System.out.println("COULDT OPEN DVC YAML");
         }
         return null;
+    }
+
+    private void createUIComponents() {
+        this.dagPanel = new DrawableJPanel();
     }
 
     private void getPipeline(String yamlFile){
@@ -186,6 +245,8 @@ class BuildStage {
     private final List<String> deps;
     private final List<String> outs;
 
+    private List<BuildStage> children = new ArrayList<>();
+
     public BuildStage(String name, String cmd, List<String> deps, List<String> outs) {
         this.name = name;
         this.cmd = cmd;
@@ -208,4 +269,24 @@ class BuildStage {
     public List<String> getOuts() {
         return outs;
     }
+
+    public void addChild(BuildStage stage) {
+        children.add(stage);
+    }
+
+    public List<BuildStage> getChildren() {
+        return children;
+    }
+
+    @Override
+    public String toString() {
+        return "BuildStage{" +
+                "name='" + name + '\'' +
+                ", cmd='" + cmd + '\'' +
+                ", deps=" + deps +
+                ", outs=" + outs +
+                ", children=" + children.stream().map(BuildStage::getName).collect(Collectors.joining(", ")) +
+                '}';
+    }
 }
+
