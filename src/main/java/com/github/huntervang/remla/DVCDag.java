@@ -3,6 +3,7 @@ package com.github.huntervang.remla;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
+import net.miginfocom.layout.Grid;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ public class DVCDag {
     }
 
     private void drawDag() {
-        dagPanel.setLayout(new FlowLayout());
+        dagPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 80, 20));
 
         List<BuildStage> rootNodes = new ArrayList<>();
         dagPanel.setBuildStaes(pipeline.getStages());
@@ -61,14 +62,14 @@ public class DVCDag {
             queue.add(stage);
             queue.add(null);
             JPanel depthPanel = new JPanel();
-            depthPanel.setLayout(new BoxLayout(depthPanel, BoxLayout.Y_AXIS));
+            depthPanel.setLayout(new GridLayout(0, 1, 0, 80));
             List<String> visited = new ArrayList<>();
             while (!queue.isEmpty()) {
                 BuildStage current = queue.remove(0);
                 if (current == null) {
                     dagPanel.add(depthPanel);
                     depthPanel = new JPanel();
-                    depthPanel.setLayout(new BoxLayout(depthPanel, BoxLayout.Y_AXIS));
+                    depthPanel.setLayout(new GridLayout(0, 1, 0, 80));
                     if (queue.isEmpty()) {
                         break;
                     }
@@ -93,9 +94,8 @@ public class DVCDag {
         JButton button = new JButton(name);
         button.setForeground(JBColor.BLACK);
         button.setBackground(JBColor.GRAY);
-//        button.setPreferredSize(new Dimension(200, 150));
         Border line = new LineBorder(JBColor.BLACK);
-        Border margin = JBUI.Borders.empty(5, 15);
+        Border margin = JBUI.Borders.empty(25, 15);
         Border compound = new CompoundBorder(line, margin);
         button.setBorder(compound);
         return button;
