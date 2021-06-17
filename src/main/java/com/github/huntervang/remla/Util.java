@@ -49,6 +49,15 @@ public class Util {
         }
     }
 
+    public static String runConsoleCommand(ProcessHandler processHandler, ProcessAdapter processAdapter) {
+        processHandler.startNotify();
+        if (processAdapter != null) {
+            processHandler.addProcessListener(processAdapter);
+        }
+        return COMMAND_RAN_CORRECTLY;
+
+    }
+
     /**
      *
      * @param basePath project basepath

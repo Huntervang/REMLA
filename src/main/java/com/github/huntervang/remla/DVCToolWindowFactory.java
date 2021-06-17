@@ -26,7 +26,7 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
      * @param toolWindow current tool window
      */
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-        checkDvcInstalled();
+        checkDvcInstalled(project);
         DVCToolWindow dvcToolWindow = new DVCToolWindow(project, toolWindow);
         NoDVCProjectWindow noDVCProjectWindow = new NoDVCProjectWindow(project,this);
         NoDVCInstalledWindow noDVCInstalledWindow = new NoDVCInstalledWindow();
@@ -62,9 +62,9 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
         contentManager.setSelectedContent(dvcToolWindowContent, true);
     }
 
-    private void checkDvcInstalled() {
+    private void checkDvcInstalled(Project project) {
         if (Util.isWindows()) {
-            Util.runConsoleCommand("dvc version", Util.getProject().getBasePath(), new ProcessAdapter() {
+            Util.runConsoleCommand("dvc version", project.getBasePath(), new ProcessAdapter() {
                 @Override
                 public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                     super.onTextAvailable(event, outputType);
@@ -74,7 +74,7 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
                 }
             });
         } else { //Unix
-            Util.runConsoleCommand("which dvc", Util.getProject().getBasePath(), new ProcessAdapter() {
+            Util.runConsoleCommand("which dvc", project.getBasePath(), new ProcessAdapter() {
                 @Override
                 public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                     super.onTextAvailable(event, outputType);
