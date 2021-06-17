@@ -6,21 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DrawableJPanel extends JPanel {
-    private List<Integer> a = new ArrayList<>();
-    private List<Integer> b = new ArrayList<>();
-    private List<Integer> c = new ArrayList<>();
-    private List<Integer> d = new ArrayList<>();
-    private List<Integer> widths = new ArrayList<>();
-    private List<Color> colors = new ArrayList<>();
-    private List<JButton> buttons = new ArrayList<>();
 
-    public void addLine(int x1, int y1, int x2, int y2, int width, Color color) {
-        a.add(x1);
-        b.add(y1);
-        c.add(x2);
-        d.add(y2);
-        widths.add(width);
-        colors.add(color);
+    private List<BuildStage> buildStages = new ArrayList<>();
+
+    public void setBuildStaes(List<BuildStage> stages) {
+        buildStages = stages;
     }
 
     @Override
@@ -28,10 +18,34 @@ public class DrawableJPanel extends JPanel {
         super.paintComponent(g);
         for (Component depthLayer : this.getComponents()) {
             for (Component stageBtn : ((JPanel) depthLayer).getComponents()) {
-                Point loc = SwingUtilities.convertPoint(depthLayer, stageBtn.getX(), stageBtn.getY(), this);
-                g.drawLine(loc.x, loc.y, 100, 100);
+                Point source = SwingUtilities.convertPoint(depthLayer, stageBtn.getX() + stageBtn.getWidth(), stageBtn.getY() + stageBtn.getHeight() / 2, this);
+                List<Point> destination = getLineDestinations(((JButton) stageBtn).getText());
+                destination.forEach(dest -> g.drawLine(source.x, source.y, dest.x, dest.y));
+
             }
         }
 
+    }
+
+    private List<Point> getLineDestinations(String stageName) {
+        for (BuildStage stage : buildStages) {
+            if (stage.getName().equals(stageName)) {
+                List<Point> destinations = new ArrayList<>();
+                stage.getChildren().forEach(child -> destinations.add(getButtonLocation(child.getName())));
+                return destinations;
+            }
+        }
+        return null;
+    }
+
+    private Point getButtonLocation(String stageName) {
+        for (Component depthLayer : this.getComponents()) {
+            for (Component stageBtn : ((JPanel) depthLayer).getComponents()) {
+                if (((JButton) stageBtn).getText().equals(stageName)) {
+                    return SwingUtilities.convertPoint(depthLayer, stageBtn.getX(), stageBtn.getY() + stageBtn.getHeight() / 2, this);
+                }
+            }
+        }
+        return null;
     }
 }

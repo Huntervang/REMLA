@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import org.yaml.snakeyaml.Yaml;
-import sun.tools.jps.Jps;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DVCDag {
     private JPanel rootPanel;
@@ -38,6 +38,7 @@ public class DVCDag {
         dagPanel.setLayout(new FlowLayout());
 
         List<BuildStage> rootNodes = new ArrayList<>();
+        dagPanel.setBuildStaes(pipeline.getStages());
         for (BuildStage stage : pipeline.getStages()) {
             if (stage.getDeps().size() <= 1) {
                 rootNodes.add(stage);
@@ -61,6 +62,7 @@ public class DVCDag {
             queue.add(null);
             JPanel depthPanel = new JPanel();
             depthPanel.setLayout(new BoxLayout(depthPanel, BoxLayout.Y_AXIS));
+            List<String> visited = new ArrayList<>();
             while (!queue.isEmpty()) {
                 BuildStage current = queue.remove(0);
                 if (current == null) {
@@ -74,9 +76,12 @@ public class DVCDag {
                     continue;
                 }
                 for (BuildStage child : current.getChildren()) {
-                    queue.add(child);
-                    JButton button = addJButton(child.getName());
-                    depthPanel.add(button);
+                    if (!visited.contains(child.getName())){
+                        queue.add(child);
+                        JButton button = addJButton(child.getName());
+                        depthPanel.add(button);
+                        visited.add(child.getName());
+                    }
                 }
             }
         }
@@ -121,8 +126,8 @@ public class DVCDag {
             for (String stage : temp) {
                 String stageName = stage.split("=")[0].substring(1);
                 String cmd = stage.split("cmd=")[1].split(",")[0];
-                List<String> deps = Arrays.asList(stage.split("deps=\\[")[1].split("]")[0].split(","));
-                List<String> outs = Arrays.asList(stage.split("outs=\\[")[1].split("]")[0].split(","));
+                List<String> deps = Arrays.stream(stage.split("deps=\\[")[1].split("]")[0].split(",")).map(String::trim).collect(Collectors.toList());
+                List<String> outs = Arrays.stream(stage.split("outs=\\[")[1].split("]")[0].split(",")).map(String::trim).collect(Collectors.toList());
                 pipeline.addStage(new BuildStage(stageName, cmd, deps, outs));
             }
             return pipeline;
@@ -199,7 +204,7 @@ class BuildStage {
                 ", cmd='" + cmd + '\'' +
                 ", deps=" + deps +
                 ", outs=" + outs +
-                ", children=" + children +
+                ", children=" + children.stream().map(BuildStage::getName).collect(Collectors.joining(", ")) +
                 '}';
     }
 }
