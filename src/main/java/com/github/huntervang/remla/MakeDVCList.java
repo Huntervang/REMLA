@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -52,8 +53,6 @@ public class MakeDVCList {
         put("deleted", JBColor.GRAY);
         put("not in cache", JBColor.RED);
     }};
-
-    private final HashMap<String, String> dvcStatus = new HashMap<>();
 
     public MakeDVCList(Project thisProject) {
         project = thisProject;
@@ -153,7 +152,8 @@ public class MakeDVCList {
     }
 
     private void runDVCStatusAndList() {
-        setDVCStatus(this::setDVCFileList);
+        setDVCFileList();
+        setDVCStatus();
     }
 
     public Vector<String> getCheckedFiles() {
@@ -167,50 +167,59 @@ public class MakeDVCList {
         return checkedFiles;
     }
 
+    public Map<String, Color> getFileColors() {
+        Map<String, Color> fileColors = new HashMap<>();
+        for (int i = 0; i < checkBoxList.getItemsCount(); i++) {
+            CheckListItem itemAt = checkBoxList.getItemAt(i);
+            if (itemAt == null) {
+                continue;
+            }
+
+            fileColors.put(itemAt.label, itemAt.color);
+        }
+        return fileColors;
+    }
+
     private void setDVCFileList() {
         String dvcListCommand = "dvc list . -R --dvc-only --show-json"; //TODO handle folder path
         String response = Util.runConsoleCommand(dvcListCommand, project.getBasePath(), new ProcessAdapter() {
-            JSONArray status;
-
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 super.onTextAvailable(event, outputType);
                 try {
                     String commandOutput = event.getText();
-                    status = new JSONArray(commandOutput);
-                } catch (org.json.JSONException e) {
-                    status = new JSONArray();
-                }
-            }
+                    JSONArray status = new JSONArray(commandOutput);
 
-            @Override
-            public void processTerminated(@NotNull ProcessEvent event) {
-                super.processTerminated(event);
-                checkBoxList.clear();
-
-                Vector<String> checkedFiles = getCheckedFiles();
-              
-                if (status.length() == 0) { //emtpy file list
-                    fileLabel.setText("There are no files tracked yet");
-                    return;
-                }
-
-                fileLabel.setText("Your tracked files:");
-
-                for (Object o : status) {
-                    JSONObject file = (JSONObject) o;
-                    String fileName = file.getString("path");
-
-                    Color fileColor;
-                    if (dvcStatus.containsKey(fileName)) {
-                        String fileStatus = dvcStatus.get(fileName);
-                        fileColor = colorMap.get(fileStatus);
-                    } else {
-                        fileColor = JBColor.GREEN;
+                    if (status.length() == 0) { //emtpy file list
+                        fileLabel.setText("There are no files tracked yet");
+                        return;
                     }
 
-                    CheckListItem checkListItem = new CheckListItem(fileName, fileColor);
-                    checkBoxList.addItem(checkListItem, fileName, checkedFiles.contains(fileName));
+                    Vector<String> checkedFiles = getCheckedFiles();
+                    Map<String, Color> fileColors = getFileColors();
+
+                    fileLabel.setText("Your tracked files:");
+
+                    ArrayList<Pair<CheckListItem, Boolean>> toAdd = new ArrayList<>();
+                    for (Object o : status) {
+                        JSONObject file = (JSONObject) o;
+                        String fileName = file.getString("path");
+
+                        CheckListItem checkListItem = new CheckListItem(fileName,
+                                fileColors.getOrDefault(fileName, JBColor.GREEN));
+
+                        toAdd.add(new Pair<>(checkListItem, checkedFiles.contains(fileName)));
+                    }
+
+                    // Sometimes clear would be visible, showing an empty file list
+                    // That is why the toAdd array was added
+                    checkBoxList.clear();
+                    for (Pair<CheckListItem, Boolean> pair : toAdd) {
+                        checkBoxList.addItem(pair.first, pair.first.label, pair.second);
+                    }
+
+                } catch (org.json.JSONException e) {
+                    // TODO: show error
                 }
             }
         });
@@ -220,37 +229,44 @@ public class MakeDVCList {
         }
     }
 
-    private void setDVCStatus(Runnable runnable) {
+    private void setDVCStatus() {
         String dvcStatusCommand = "dvc status --show-json";
         String response = Util.runConsoleCommand(dvcStatusCommand, project.getBasePath(), new ProcessAdapter() {
-            JSONObject status;
 
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 super.onTextAvailable(event, outputType);
                 try {
                     String commandOutput = event.getText();
-                    status = new JSONObject(commandOutput);
+                    JSONObject status = new JSONObject(commandOutput);
                     for (String dvcFile : status.keySet()) { //traverse json format output of dvc status (entry per *.dvc file)
                         JSONArray DVCFileStatus = (JSONArray) status.get(dvcFile);
+
                         for (Object statusEntries : DVCFileStatus) {
                             JSONObject statusjson = (JSONObject) statusEntries;
                             JSONObject outgoingEntry = (JSONObject) statusjson.get("changed outs");
-                            for (String filename : outgoingEntry.keySet()) {
-                                dvcStatus.put(filename, (String) outgoingEntry.get(filename));
-                            }
-                        }//TODO incoming EntrySet?
-                    }
-                    System.out.println(dvcStatus.keySet());
-                } catch (org.json.JSONException e) {
-                    status = new JSONObject();
-                }
-            }
 
-            @Override
-            public void processTerminated(@NotNull ProcessEvent event) {
-                super.processTerminated(event);
-                runnable.run();
+                            for (String filename : outgoingEntry.keySet()) {
+                                for (int i = 0; i < checkBoxList.getItemsCount(); i++) {
+                                    CheckListItem itemAt = checkBoxList.getItemAt(i);
+                                    if (itemAt == null) {
+                                        continue;
+                                    }
+
+                                    if (filename.equals(itemAt.label)) {
+                                        String fileStatus = (String) outgoingEntry.get(filename);
+                                        Color fileColor = colorMap.get(fileStatus);
+
+                                        CheckListItem newItem = new CheckListItem(itemAt.label, fileColor);
+                                        checkBoxList.updateItem(itemAt, newItem, itemAt.label);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (org.json.JSONException e) {
+                    // TODO: show some error
+                }
             }
         });
         if (!Util.commandRanCorrectly(response)) {
@@ -278,6 +294,19 @@ public class MakeDVCList {
         @Override
         public String toString() {
             return label;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CheckListItem that = (CheckListItem) o;
+            return Objects.equals(label, that.label) && Objects.equals(color, that.color);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(label, color);
         }
     }
 
