@@ -2,19 +2,23 @@ package com.github.huntervang.remla;
 
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
 public class DVCToolWindowFactory implements ToolWindowFactory {
+    private ContentManager contentManager;
+    private Content dvcToolWindowContent;
+    private Content noDVCProjectContent;
+    private Content noDVCInstalledContent;
+    private boolean isDvcInProject;
 
-    public static Content dvcToolWindowContent;
-
-    private boolean isDvcInstalled;
     /**
      * Create the tool window content.
      *
@@ -24,28 +28,38 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         checkDvcInstalled(project);
         DVCToolWindow dvcToolWindow = new DVCToolWindow(project, toolWindow);
-        NoDVCProjectWindow noDVCProjectWindow = new NoDVCProjectWindow(toolWindow);
+        NoDVCProjectWindow noDVCProjectWindow = new NoDVCProjectWindow(project,this);
         NoDVCInstalledWindow noDVCInstalledWindow = new NoDVCInstalledWindow();
 
-
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-        Content noDVCInstalledContent = contentFactory.createContent(noDVCInstalledWindow.getContent(), "", false);
-        Content noDVCProjectContent = contentFactory.createContent(noDVCProjectWindow.getContent(), "", false);
+        noDVCInstalledContent = contentFactory.createContent(noDVCInstalledWindow.getContent(), "", false);
+        noDVCProjectContent = contentFactory.createContent(noDVCProjectWindow.getContent(), "", false);
         dvcToolWindowContent = contentFactory.createContent(dvcToolWindow.getContent(), "", false);
 
-        toolWindow.getContentManager().addContent(noDVCInstalledContent);
-        toolWindow.getContentManager().addContent(noDVCProjectContent);
-        toolWindow.getContentManager().addContent(dvcToolWindowContent);
+        contentManager = toolWindow.getContentManager();
+        contentManager.addContent(noDVCInstalledContent);
+        contentManager.setSelectedContent(noDVCInstalledContent, true);
 
-        if (!isDvcInstalled) {
-            toolWindow.getContentManager().setSelectedContent(noDVCInstalledContent, true);
+        isDvcInProject = Util.isDvcInProject(project.getBasePath());
+    }
+
+    private void setDvcInstalledView() {
+        contentManager.removeContent(noDVCInstalledContent, true);
+
+        if (!isDvcInProject) {
+            contentManager.addContent(noDVCProjectContent);
+            contentManager.setSelectedContent(noDVCProjectContent, true);
         } else {
-            if (!Util.isDvcInProject(project.getBasePath())) {
-                toolWindow.getContentManager().setSelectedContent(noDVCProjectContent, true);
-            } else {
-                toolWindow.getContentManager().setSelectedContent(dvcToolWindowContent, true);
-            }
+            contentManager.addContent(dvcToolWindowContent);
+            contentManager.setSelectedContent(dvcToolWindowContent, true);
         }
+    }
+
+    public void setDvcInProjectView() {
+        contentManager.removeContent(noDVCProjectContent, true);
+
+        contentManager.addContent(dvcToolWindowContent);
+        contentManager.setSelectedContent(dvcToolWindowContent, true);
     }
 
     private void checkDvcInstalled(Project project) {
@@ -55,7 +69,7 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
                 public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                     super.onTextAvailable(event, outputType);
                     if (event.getText().contains("DVC version")) {
-                        isDvcInstalled = true;
+                        ApplicationManager.getApplication().invokeLater(() -> setDvcInstalledView());
                     }
                 }
             });
@@ -64,7 +78,7 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
                 @Override
                 public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                     super.onTextAvailable(event, outputType);
-                    isDvcInstalled = true;
+                    ApplicationManager.getApplication().invokeLater(() -> setDvcInstalledView());
                 }
             });
         }

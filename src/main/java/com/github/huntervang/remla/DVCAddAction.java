@@ -35,7 +35,8 @@ public class DVCAddAction extends AnAction {
                 DVCAdd.dvcAdd(file, project);
             }
         } else {
-            // TODO: some error feedback
+            System.err.println("DVC add failed from context action: project==null or file==null");
+            Util.errorDialog("Error: Add file from DVC failed", "Failed to add file. No project or file.");
         }
     }
 
