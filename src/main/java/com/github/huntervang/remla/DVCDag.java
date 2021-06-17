@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
-import net.miginfocom.layout.Grid;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.swing.*;
@@ -26,14 +25,12 @@ import java.util.stream.Collectors;
 
 public class DVCDag {
     private JPanel rootPanel;
-    private JPanel dagPanel;
     private DrawableJPanel dagPanel;
-    private JButton runPipelineButton;
+    private JButton reproButton;
+    private JList<String> stageList;
     private final Project project;
     private final Pipeline pipeline;
 
-    private JButton reproButton;
-    private JList stageList;
     private String activeStage = "";
 
     private HashMap<String, Object> pipeLine;
@@ -45,6 +42,7 @@ public class DVCDag {
             drawDag();
         }
         reproButton.addActionListener(e -> repro());
+        reproButton.setText("Reproduce Pipeline");
         getPipeline(project.getBasePath() + "/dvc.yaml");
     }
 
@@ -57,7 +55,7 @@ public class DVCDag {
         dagPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 80, 20));
 
         List<BuildStage> rootNodes = new ArrayList<>();
-        dagPanel.setBuildStaes(pipeline.getStages());
+        dagPanel.setBuildStages(pipeline.getStages());
         for (BuildStage stage : pipeline.getStages()) {
             if (stage.getDeps().size() <= 1) {
                 rootNodes.add(stage);
@@ -93,22 +91,6 @@ public class DVCDag {
                     }
                     queue.add(null);
                     continue;
-        final String pipelineStage = current.getName();
-        JButton newButton = new JButton(pipelineStage);
-        newButton.addActionListener(e -> updateStage(pipelineStage));
-        dagPanel.add(newButton);
-        while (true) {
-            boolean hasNext = false;
-            for (BuildStage next : pipeline.getStages()) {
-                if (!current.equals(next) && intersects(current.getOuts(), next.getDeps())) {
-                    dagPanel.add(new JLabel("-->"));
-                    final String pipelineStage2 = next.getName();
-                    newButton = new JButton(pipelineStage2);
-                    newButton.addActionListener(e -> updateStage(pipelineStage2));
-                    dagPanel.add(newButton);
-                    current = next;
-                    hasNext = true;
-                    break;
                 }
                 for (BuildStage child : current.getChildren()) {
                     if (!visited.contains(child.getName())){
@@ -126,6 +108,7 @@ public class DVCDag {
 
     private JButton addJButton(String name) {
         JButton button = new JButton(name);
+        button.addActionListener(e -> updateStage(name));
         button.setForeground(JBColor.BLACK);
         button.setBackground(JBColor.GRAY);
         Border line = new LineBorder(JBColor.BLACK);
@@ -153,7 +136,7 @@ public class DVCDag {
     private Pipeline parseYaml() {
         try {
             Yaml yaml = new Yaml();
-            InputStream inputStream = new FileInputStream(new File(project.getBasePath() + "/dvc.yaml"));
+            InputStream inputStream = new FileInputStream(project.getBasePath() + "/dvc.yaml");
             Map<String, Object> obj = yaml.load(inputStream);
             String[] temp = obj.get("stages").toString().split("},");
             Pipeline pipeline = new Pipeline();
@@ -166,8 +149,8 @@ public class DVCDag {
             }
             return pipeline;
         } catch (Exception e) {
-            System.out.println(e);
-            System.out.println("COULDT OPEN DVC YAML");
+            System.out.println("Can not Open DVC.yaml" + e.getMessage());
+            Util.errorDialog("Can not Open DVC.yaml", "Can not Open DVC.yaml" + e.getMessage());
         }
         return null;
     }
@@ -245,7 +228,7 @@ class BuildStage {
     private final List<String> deps;
     private final List<String> outs;
 
-    private List<BuildStage> children = new ArrayList<>();
+    private final List<BuildStage>  children = new ArrayList<>();
 
     public BuildStage(String name, String cmd, List<String> deps, List<String> outs) {
         this.name = name;
