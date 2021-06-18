@@ -40,7 +40,7 @@ public class DVCDag {
             drawDag();
         }
         reproButton.addActionListener(e -> repro(""));
-        reproButton.setText("Reproduce Pipeline");
+        reproButton.setText("Reproduce Entire Pipeline");
         getPipeline(project.getBasePath() + "/dvc.yaml");
     }
 
