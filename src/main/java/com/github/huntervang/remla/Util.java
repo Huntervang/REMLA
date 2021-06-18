@@ -95,7 +95,10 @@ public class Util {
     }
 
     public static boolean commandRanCorrectly(String message) {
-        return message.equals(COMMAND_RAN_CORRECTLY);
+        if(message == null)
+            return false;
+        else
+            return message.equals(COMMAND_RAN_CORRECTLY);
     }
 
     public static String getExistingRemote() {
