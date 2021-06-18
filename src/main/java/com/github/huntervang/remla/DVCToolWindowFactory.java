@@ -17,6 +17,7 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
     private Content dvcToolWindowContent;
     private Content noDVCProjectContent;
     private Content noDVCInstalledContent;
+    private Content dvcDagContent;
     private boolean isDvcInProject;
 
     /**
@@ -30,11 +31,13 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
         DVCToolWindow dvcToolWindow = new DVCToolWindow(project, toolWindow);
         NoDVCProjectWindow noDVCProjectWindow = new NoDVCProjectWindow(project,this);
         NoDVCInstalledWindow noDVCInstalledWindow = new NoDVCInstalledWindow();
+        DVCDag dvcDag = new DVCDag(project);
 
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
         noDVCInstalledContent = contentFactory.createContent(noDVCInstalledWindow.getContent(), "", false);
         noDVCProjectContent = contentFactory.createContent(noDVCProjectWindow.getContent(), "", false);
-        dvcToolWindowContent = contentFactory.createContent(dvcToolWindow.getContent(), "", false);
+        dvcToolWindowContent = contentFactory.createContent(dvcToolWindow.getContent(), "DVC", false);
+        dvcDagContent = contentFactory.createContent(dvcDag.getContent(), "DVC Dag", false);
 
         contentManager = toolWindow.getContentManager();
         contentManager.addContent(noDVCInstalledContent);
@@ -52,6 +55,7 @@ public class DVCToolWindowFactory implements ToolWindowFactory {
         } else {
             contentManager.addContent(dvcToolWindowContent);
             contentManager.setSelectedContent(dvcToolWindowContent, true);
+            contentManager.addContent(dvcDagContent);
         }
     }
 

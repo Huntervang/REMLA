@@ -32,8 +32,8 @@ public class DVCAddRemote {
     private final Project project;
     private Icon defaultIcon;
 
-    public DVCAddRemote(ToolWindow toolWindow) {
-        project = Util.getProject();
+    public DVCAddRemote(ToolWindow toolWindow, Project project) {
+        this.project = project;
         defaultIcon = openCurrentStorageButton.getIcon();
         updateOpenStorageButton();
     }
