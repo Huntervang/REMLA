@@ -126,28 +126,23 @@ public class MakeDVCList {
                                     if (remote.contains("gdrive") && event.getText().contains("https://")) {
                                         ApplicationManager.getApplication().invokeLater(() -> showGoogleDriveDialog(event.getText(), processHandler));
                                     }
-                                    System.out.println(event.getText());
-                                    //TODO parse command response
                                 } catch (org.json.JSONException e) {
-                                    //TODO on command failure
+                                    Util.errorDialog("Upload Failed, Cannot Parse Response", "Upload Failed, Cannot Parse Response " + e.getMessage());
                                 }
                             }
                         });
                     } catch (ExecutionException e) {
                         e.printStackTrace();
+                        Util.errorDialog("Upload Failed to Execute", "Upload Failed to Execute " + e.getMessage());
                     }
 
-                    //TODO based on response: provide feedback
                     if (Util.commandRanCorrectly(response)) {
-                        System.out.println("command executed properly i guess");
+                        Util.errorDialog("Upload Succeeded", "Upload Succeeded");
                     }
                 }
             }
         } else {
-            ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(project,
-                    "You have not selected a storage location yet, please choose one using the menu on the right",
-                    "No Storage Location Selected"
-            ));
+            Util.errorDialog("No Storage Location Selected", "You have not selected a storage location yet, please choose one using the menu on the right");
         }
     }
 
@@ -219,7 +214,7 @@ public class MakeDVCList {
                     }
 
                 } catch (org.json.JSONException e) {
-                    // TODO: show error
+                    Util.errorDialog("Cannot Set File Status List","Cannot Set File Status List: " + e.getMessage());
                 }
             }
         });
@@ -265,7 +260,7 @@ public class MakeDVCList {
                         }
                     }
                 } catch (org.json.JSONException e) {
-                    // TODO: show some error
+                    Util.errorDialog("Cannot Get File Status","Cannot get file status: " + e.getMessage());
                 }
             }
         });
