@@ -3,16 +3,16 @@
     <name>REMLA</name>
     <vendor>huntervang</vendor>
 
+    <description>
+        <![CDATA[
+      DVC plugin for REMLA project.</br>
+      Supports simple version control and a visualization of the pipeline.
+    ]]>
+    </description>
+
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
-
-    <actions>
-        <group id="REMLA.HelloWorldAction" text="REMLA" description="Plugin for REMLA">
-            <add-to-group group-id="MainMenu" anchor="last"/>
-            <action class="com.github.huntervang.remla.HelloWorldAction" id="REMLA.Actions.HelloWorldAction" text="Say Hello"/>
-        </group>
-    </actions>
 
     <actions>
         <group id="REMLA.DVCPopUp" text="DVC" description="DVC plugin" popup="true">
