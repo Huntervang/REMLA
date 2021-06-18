@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 public class DVCDag {
     private JPanel rootPanel;
-    private DrawableJPanel dagPanel;
+    private DagPanel dagPanel;
     private JButton reproButton;
     private JList<String> stageList;
     private final Project project;
@@ -46,7 +46,7 @@ public class DVCDag {
         getPipeline(project.getBasePath() + "/dvc.yaml");
     }
 
-    private void updateStage(String stageName){
+    private void updateStage(String stageName) {
         activeStage = stageName;
         System.out.println("setting: " + stageName);
     }
@@ -93,7 +93,7 @@ public class DVCDag {
                     continue;
                 }
                 for (BuildStage child : current.getChildren()) {
-                    if (!visited.contains(child.getName())){
+                    if (!visited.contains(child.getName())) {
                         queue.add(child);
                         JButton button = addJButton(child.getName());
                         depthPanel.add(button);
@@ -156,25 +156,26 @@ public class DVCDag {
     }
 
     private void createUIComponents() {
-        this.dagPanel = new DrawableJPanel();
+        this.dagPanel = new DagPanel();
     }
 
-    private void getPipeline(String yamlFile){
+    private void getPipeline(String yamlFile) {
         Yaml DVCYaml = new Yaml();
         File initialFile = new File(yamlFile);
-        try{
+        try {
             InputStream targetStream = new FileInputStream(initialFile);
             pipeLine = DVCYaml.load(targetStream);
-        } catch(IOException e){
+        } catch (IOException e) {
             System.err.println(e.getMessage());
         }
     }
 
     private void repro() {
+        dagPanel.startPipeline();
         System.out.println("Starting Reproduction");
         System.out.println("active button: " + activeStage);
         if (pipeLine != null) {
-            if(pipeLine.containsKey("stages")){
+            if (pipeLine.containsKey("stages")) {
                 String dvcListCommand = "dvc repro " + activeStage; //repro only ./dvc.yaml to avoid deeper nested files
                 Vector<String> outputList = new Vector<>();
                 try {
@@ -185,8 +186,14 @@ public class DVCDag {
                             String commandOutput = event.getText();
                             JLabel stageOutput = new JLabel();
                             stageOutput.setText(commandOutput);
-                            outputList.add(commandOutput);
+                            System.out.println(commandOutput);
+                            handleDagRainbow(commandOutput);
                             stageList.setListData(outputList);
+                        }
+
+                        @Override
+                        public void processTerminated(@NotNull ProcessEvent event) {
+                            dagPanel.finishLastStage();
                         }
                     });
 
@@ -196,12 +203,26 @@ public class DVCDag {
                     } else {
                         System.out.println("Succeeded Reproduction");
                     }
-                }catch(Exception e){
+                } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
             }
         } else {
-            Util.errorDialog("No Pipeline Setup","There is no pipeline detected. There should be a .yaml file in the DVC project.");
+            Util.errorDialog("No Pipeline Setup", "There is no pipeline detected. There should be a .yaml file in the DVC project.");
+        }
+    }
+
+    private void handleDagRainbow(String commandOutput) {
+        if (commandOutput.contains("Running stage '")) {
+            String stageName = commandOutput.split("(?=('[^']*)')")[1].substring(1).split("':")[0];
+            dagPanel.runStage(stageName);
+        } else if (commandOutput.contains("Stage '")) {
+            String stageName = commandOutput.split("(?=('[^']*)')")[1].substring(1);
+            if (commandOutput.contains("didn't change, skipping")) {
+                dagPanel.skipStage(stageName);
+            } else if (commandOutput.contains("is cached - skipping run")) {
+                dagPanel.cacheStage(stageName);
+            }
         }
     }
 
@@ -228,7 +249,7 @@ class BuildStage {
     private final List<String> deps;
     private final List<String> outs;
 
-    private final List<BuildStage>  children = new ArrayList<>();
+    private final List<BuildStage> children = new ArrayList<>();
 
     public BuildStage(String name, String cmd, List<String> deps, List<String> outs) {
         this.name = name;
