@@ -31,8 +31,6 @@ public class DVCDag {
     private final Project project;
     private final Pipeline pipeline;
 
-    private String activeStage = "";
-
     private HashMap<String, Object> pipeLine;
 
     public DVCDag(@NotNull Project newProject) {
@@ -41,14 +39,9 @@ public class DVCDag {
         if (this.pipeline != null) {
             drawDag();
         }
-        reproButton.addActionListener(e -> repro());
+        reproButton.addActionListener(e -> repro(""));
         reproButton.setText("Reproduce Pipeline");
         getPipeline(project.getBasePath() + "/dvc.yaml");
-    }
-
-    private void updateStage(String stageName){
-        activeStage = stageName;
-        System.out.println("setting: " + stageName);
     }
 
     private void drawDag() {
@@ -108,7 +101,7 @@ public class DVCDag {
 
     private JButton addJButton(String name) {
         JButton button = new JButton(name);
-        button.addActionListener(e -> updateStage(name));
+        button.addActionListener(e -> repro(name));
         button.setForeground(JBColor.BLACK);
         button.setBackground(JBColor.GRAY);
         Border line = new LineBorder(JBColor.BLACK);
@@ -170,13 +163,17 @@ public class DVCDag {
         }
     }
 
-    private void repro() {
-        System.out.println("Starting Reproduction");
-        System.out.println("active button: " + activeStage);
+    private void repro(String stage) {
+        System.out.println("Starting Reproduction " + stage);
         if (pipeLine != null) {
             if(pipeLine.containsKey("stages")){
-                String dvcListCommand = "dvc repro " + activeStage; //repro only ./dvc.yaml to avoid deeper nested files
+                String dvcListCommand = "dvc repro " + stage; //repro only ./dvc.yaml to avoid deeper nested files
                 Vector<String> outputList = new Vector<>();
+                if(stage.equals(""))
+                    outputList.add("Reproducing entire pipeline.");
+                else
+                    outputList.add("Reproducing pipeline up to stage \"" + stage + "\".");
+                stageList.setListData(outputList);
                 try {
                     String response = Util.runConsoleCommand(dvcListCommand, project.getBasePath(), new ProcessAdapter() {
                         @Override
