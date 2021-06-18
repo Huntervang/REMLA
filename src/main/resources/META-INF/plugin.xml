@@ -5,8 +5,15 @@
 
     <description>
         <![CDATA[
-      DVC plugin for REMLA project.</br>
-      Supports simple version control and a visualization of the pipeline.
+        DVC plugin for REMLA project.</br>
+
+        This is a proof of concept plugin for a student project from TU Delft that allows people unfamiliar with
+        (or not liking) command line interfaces or the DVC CLI in particular. It allows you to set a remote storage
+        (local, Google Drive or SSH connection), add and push files and reproduce a pipeline from a DVC.yaml file with
+        real time visualisation in the pipeline graph.</br>
+
+        For questions and remarks please contact us at A.H.Reurink@student.tudelft.nl.
+
     ]]>
     </description>
 
