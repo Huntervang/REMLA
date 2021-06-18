@@ -1,8 +1,8 @@
 # DVC plugin for REMLA
 
 ![Build](https://github.com/Huntervang/REMLA/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/17050-remla.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/17050-remla.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/17050-remla.svg)](https://plugins.jetbrains.com/plugin/17050-remla)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/17050-remla.svg)](https://plugins.jetbrains.com/plugin/17050-remla)
 
 <!-- Plugin description -->
 This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
