@@ -5,11 +5,14 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/17050-remla.svg)](https://plugins.jetbrains.com/plugin/17050-remla)
 
 <!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
+DVC plugin for REMLA project.</br>
 
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
+This is a proof of concept plugin for a student project from TU Delft that allows people unfamiliar with
+(or not liking) command line interfaces or the DVC CLI in particular. It allows you to set a remote storage
+(local, Google Drive or SSH connection), add and push files and reproduce a pipeline from a DVC.yaml file with
+real time visualisation in the pipeline graph.</br>
 
-To keep everything working, do not remove `<!-- ... -->` sections. 
+For questions and remarks please contact us at A.H.Reurink@student.tudelft.nl.
 <!-- Plugin description end -->
 
 ## Installation
