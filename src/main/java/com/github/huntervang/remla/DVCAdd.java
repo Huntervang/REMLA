@@ -30,6 +30,11 @@ public class DVCAdd {
         FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, true,
                 true, true, false, true);
         fileChooserDescriptor.setRoots(ProjectRootManager.getInstance(project).getContentRootsFromAllModules());
+        fileChooserDescriptor.withFileFilter(virtualFile -> {
+            boolean noDvcFileExists = virtualFile.getParent().findChild(virtualFile.getName() + ".dvc") == null;
+            boolean isNotADVCFile = !virtualFile.getPath().endsWith(".dvc");
+            return isNotADVCFile && noDvcFileExists;
+        });
         fileChooserDescriptor.setTitle("Choose Files/Folders to Add to Dvc");
 
         VirtualFile[] files = FileChooser.chooseFiles(fileChooserDescriptor, project, null);
