@@ -17,12 +17,9 @@ For questions and remarks please contact us at A.H.Reurink@student.tudelft.nl.
 
 ## Installation
 
-- Using IDE built-in plugin system:
-  
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "REMLA"</kbd> >
-  <kbd>Install Plugin</kbd>
-  
-- Manually:
+Download the [latest release](https://github.com/Huntervang/REMLA/releases/latest) or find the .zip file in the `build/distributions` folder after running `gradle buildPlugin`and install it using
+<kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
-  Download the [latest release](https://github.com/Huntervang/REMLA/releases/latest) and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+
+
+The source code can also be ran directly by executing `gradle runIde` which downloads and caches a clean Ide to run the plugin in.
