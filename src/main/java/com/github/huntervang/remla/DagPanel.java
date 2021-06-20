@@ -1,17 +1,21 @@
 package com.github.huntervang.remla;
 
+import com.intellij.ui.JBColor;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DrawableJPanel extends JPanel {
+public class DagPanel extends JPanel {
 
     private List<BuildStage> buildStages = new ArrayList<>();
 
     public void setBuildStages(List<BuildStage> stages) {
         buildStages = stages;
     }
+
+    private String previousStage = null;
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -47,5 +51,58 @@ public class DrawableJPanel extends JPanel {
             }
         }
         return null;
+    }
+
+    public void startPipeline() {
+        previousStage = null;
+        for (Component depthLayer : this.getComponents()) {
+            for (Component stageBtn : ((JPanel) depthLayer).getComponents()) {
+                ((JButton) stageBtn).setBackground(JBColor.GRAY);
+                ((JButton) stageBtn).setOpaque(true);
+            }
+        }
+    }
+
+    public void runStage(String stageName) {
+        setColour(stageName, JBColor.BLUE);
+    }
+
+    public void skipStage(String stageName) {
+        setColour(stageName, JBColor.GREEN);
+    }
+
+    public void cacheStage(String stageName) {
+        setColour(stageName, JBColor.GREEN);
+    }
+
+    public void failStage(String stageName) {
+
+    }
+
+    public void passStage(String stageName) {
+
+    }
+
+    private void setColour(String stageName, JBColor color) {
+        for (Component depthLayer : this.getComponents()) {
+            for (Component stageBtn : ((JPanel) depthLayer).getComponents()) {
+                if (((JButton) stageBtn).getText().equals(stageName)) {
+                    ((JButton) stageBtn).setBackground(color);
+                    ((JButton) stageBtn).setOpaque(true);
+                }
+                if (((JButton) stageBtn).getText().equals(previousStage)) {
+                    ((JButton) stageBtn).setBackground(JBColor.GREEN);
+                    ((JButton) stageBtn).setOpaque(true);
+                    previousStage = stageName;
+                }
+            }
+        }
+        if (previousStage == null) {
+            previousStage = stageName;
+        }
+    }
+
+    public void finishLastStage() {
+        setColour(previousStage, JBColor.GREEN);
     }
 }
