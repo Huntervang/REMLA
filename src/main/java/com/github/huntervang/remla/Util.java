@@ -121,6 +121,6 @@ public class Util {
     }
 
     static void errorDialog(String title, String message){
-        ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(Util.getProject(), message, title));
+        //ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(Util.getProject(), message, title));
     }
 }
