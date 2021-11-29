@@ -28,7 +28,7 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
     // https://mvnrepository.com/artifact/org.json/json
     implementation("org.json:json:20210307")
     implementation("org.yaml:snakeyaml:1.21")
